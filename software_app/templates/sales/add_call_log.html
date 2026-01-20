@@ -1,0 +1,493 @@
+{% extends "base2.html" %}
+{% load static %}
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-phone-alt me-3 fs-2" style="color: #0152a4;"></i>
+    <div class="fw-bold fs-3">Add Call Log</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Add Call Log</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <!-- Step Progress Bar -->
+  <div class="step-progressbar mb-4 d-flex align-items-center justify-content-center">
+    <div class="step active" id="step-bubble-1">1</div>
+    <div class="progress-line" id="line-1"></div>
+    <div class="step" id="step-bubble-2">2</div>
+  </div>
+
+  <form method="POST" id="callLogForm">
+    {% csrf_token %}
+    <div class="card shadow-lg mb-4 modern-card">
+      <div class="card-header table-title-bar fw-bold text-white d-flex align-items-center">
+        <i class="fas fa-clipboard-list me-2"></i>
+        Step <span id="stepNumber">1</span> of 2
+      </div>
+      <div class="card-body p-4">
+        
+        <!-- Step 1: Client Selection -->
+        <div class="form-step" id="step-1">
+          <div class="step-header mb-4">
+            <h5 class="text-primary"><i class="fas fa-building me-2"></i>Client Selection</h5>
+            <hr class="title-underline">
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label"><i class="fas fa-list me-2 text-primary"></i>Select Client Type <span class="text-danger">*</span></label>
+              <select class="form-control modern-input" id="clientType" name="client_type" required>
+                <option value="existing">Existing Client</option>
+                <option value="new">New Client</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Existing Client Section -->
+          <div id="existingClientSection">
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <label class="form-label"><i class="fas fa-search me-2 text-primary"></i>Search Existing Client <span class="text-danger">*</span></label>
+                <select class="form-control modern-input" id="existingClient" name="existing_client_id">
+                  <option value="">-- Select Client --</option>
+                  {% for c in clients %}
+                    <option value="{{ c.id }}" 
+                            data-company="{{ c.company_name }}"
+                            data-contact="{{ c.contact_person }}"
+                            data-email="{{ c.email }}"
+                            data-mobile="{{ c.mobile }}"
+                            {% if client and client.id == c.id %}selected{% endif %}>
+                      {{ c.client_id }} - {{ c.company_name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <!-- Display Selected Client Info -->
+            <div class="client-info-box mb-4" id="clientInfoBox" {% if not client %}style="display:none;"{% endif %}>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="info-badge">
+                    <i class="fas fa-building text-primary"></i>
+                    <span><strong>Company:</strong> <span id="displayCompany">{% if client %}{{ client.company_name }}{% endif %}</span></span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-badge">
+                    <i class="fas fa-user-tie text-primary"></i>
+                    <span><strong>Contact:</strong> <span id="displayContact">{% if client %}{{ client.contact_person }}{% endif %}</span></span>
+                  </div>
+                </div>
+                <div class="col-md-6 mt-3">
+                  <div class="info-badge">
+                    <i class="fas fa-envelope text-primary"></i>
+                    <span><strong>Email:</strong> <span id="displayEmail">{% if client %}{{ client.email }}{% endif %}</span></span>
+                  </div>
+                </div>
+                <div class="col-md-6 mt-3">
+                  <div class="info-badge">
+                    <i class="fas fa-mobile-alt text-primary"></i>
+                    <span><strong>Mobile:</strong> <span id="displayMobile">{% if client %}{{ client.mobile }}{% endif %}</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- New Client Section (Hidden by default) -->
+          <div id="newClientSection" class="d-none">
+            <div class="step-header mb-4">
+              <h5 class="text-primary"><i class="fas fa-user-plus me-2"></i>New Client Details</h5>
+              <hr class="title-underline">
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-building me-2 text-primary"></i>Company Name <span class="text-danger">*</span></label>
+                <input type="text" name="new_company_name" class="form-control modern-input" placeholder="Enter company name" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-user-tie me-2 text-primary"></i>Contact Person <span class="text-danger">*</span></label>
+                <input type="text" name="new_contact_person" class="form-control modern-input" placeholder="Enter contact person" />
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-envelope me-2 text-primary"></i>Email <span class="text-danger">*</span></label>
+                <input type="email" name="new_email" class="form-control modern-input" placeholder="Enter email" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-mobile-alt me-2 text-primary"></i>Mobile <span class="text-danger">*</span></label>
+                <input type="tel" name="new_mobile" class="form-control modern-input" placeholder="Enter mobile" maxlength="15" />
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <label class="form-label"><i class="fas fa-map-marked-alt me-2 text-primary"></i>Address</label>
+                <textarea name="new_address" class="form-control modern-input" rows="2" placeholder="Enter address (optional)"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Call Details -->
+        <div class="form-step d-none" id="step-2">
+          <div class="step-header mb-4">
+            <h5 class="text-primary"><i class="fas fa-phone-volume me-2"></i>Call Details</h5>
+            <hr class="title-underline">
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label"><i class="fas fa-calendar me-2 text-primary"></i>Call Date <span class="text-danger">*</span></label>
+              <input type="date" name="call_date" class="form-control modern-input" required max="{{ today }}" value="{{ today }}" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label"><i class="fas fa-clock me-2 text-primary"></i>Call Time <span class="text-danger">*</span></label>
+              <input type="time" name="call_time" class="form-control modern-input" required id="callTime" />
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <label class="form-label"><i class="fas fa-stopwatch me-2 text-primary"></i>Call Duration</label>
+              <input type="text" name="duration" class="form-control modern-input" placeholder="e.g., 15 mins, 1 hour" />
+              <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Optional: Enter call duration</small>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <label class="form-label"><i class="fas fa-signal me-2 text-primary"></i>Client Status <span class="text-danger">*</span></label>
+              <select name="client_status" class="form-control modern-input" required>
+                <option value="">-- Select Status --</option>
+                <option value="contacted">Contacted</option>
+                <option value="follow_up">Follow Up</option>
+                <option value="interested">Interested ⭐</option>
+                <option value="not_interested">Not Interested</option>
+              </select>
+              <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Update client status after this call</small>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <label class="form-label"><i class="fas fa-comment-dots me-2 text-primary"></i>Call Notes <span class="text-danger">*</span></label>
+              <textarea name="notes" class="form-control modern-input" rows="5" placeholder="Enter detailed notes about the call discussion..." required></textarea>
+              <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Minimum 10 characters required</small>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <label class="form-label"><i class="fas fa-bell me-2 text-primary"></i>Next Follow-up Date</label>
+              <input type="date" name="next_follow_up" class="form-control modern-input" min="{{ today }}" />
+              <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Optional: Schedule next follow-up</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="text-end mt-4 pt-3 border-top">
+          <a href="{% url 'client_list' %}" class="btn btn-secondary btn-nav" id="cancelBtn">
+            <i class="fas fa-times me-2"></i>Cancel
+          </a>
+          <button type="button" id="prevBtn" class="btn btn-secondary btn-nav" disabled>
+            <i class="fas fa-arrow-left me-2"></i>Previous
+          </button>
+          <button type="button" id="nextBtn" class="btn btn-primary btn-nav">
+            Next<i class="fas fa-arrow-right ms-2"></i>
+          </button>
+          <button type="submit" id="submitBtn" class="btn btn-success btn-nav d-none">
+            <i class="fas fa-check-circle me-2"></i>Save Call Log
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+// Step Navigation
+let currentStep = 1;
+
+function showStep(step) {
+  document.querySelectorAll('.form-step').forEach((el, idx) => {
+    el.classList.toggle('d-none', idx + 1 !== step);
+  });
+  
+  document.getElementById('stepNumber').innerText = step;
+  
+  // Update step bubbles
+  for (let i = 1; i <= 2; i++) {
+    const bubble = document.getElementById('step-bubble-' + i);
+    const line = document.getElementById('line-' + i);
+    
+    bubble.classList.remove('active', 'completed');
+    if (i < step) bubble.classList.add('completed');
+    else if (i === step) bubble.classList.add('active');
+    
+    if (line) line.classList.toggle('active', i < step);
+  }
+  
+  document.getElementById('prevBtn').disabled = step === 1;
+  document.getElementById('nextBtn').classList.toggle('d-none', step === 2);
+  document.getElementById('submitBtn').classList.toggle('d-none', step !== 2);
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  if (validateStep1()) {
+    currentStep++;
+    showStep(currentStep);
+  }
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  currentStep--;
+  showStep(currentStep);
+});
+
+function validateStep1() {
+  const clientType = document.getElementById('clientType').value;
+  
+  if (clientType === 'new') {
+    const companyName = document.querySelector('input[name="new_company_name"]').value.trim();
+    const contactPerson = document.querySelector('input[name="new_contact_person"]').value.trim();
+    const email = document.querySelector('input[name="new_email"]').value.trim();
+    const mobile = document.querySelector('input[name="new_mobile"]').value.trim();
+    
+    if (!companyName || !contactPerson || !email || !mobile) {
+      alert('Please fill all required fields for new client!');
+      return false;
+    }
+  } else {
+    const selectedClient = document.getElementById('existingClient').value;
+    if (!selectedClient) {
+      alert('Please select an existing client!');
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+// Client Type Toggle
+document.getElementById('clientType').addEventListener('change', function() {
+  const isNew = this.value === 'new';
+  document.getElementById('existingClientSection').classList.toggle('d-none', isNew);
+  document.getElementById('newClientSection').classList.toggle('d-none', !isNew);
+  
+  // Toggle required attributes
+  if (isNew) {
+    document.querySelector('input[name="new_company_name"]').required = true;
+    document.querySelector('input[name="new_contact_person"]').required = true;
+    document.querySelector('input[name="new_email"]').required = true;
+    document.querySelector('input[name="new_mobile"]').required = true;
+    document.getElementById('existingClient').required = false;
+  } else {
+    document.querySelector('input[name="new_company_name"]').required = false;
+    document.querySelector('input[name="new_contact_person"]').required = false;
+    document.querySelector('input[name="new_email"]').required = false;
+    document.querySelector('input[name="new_mobile"]').required = false;
+    document.getElementById('existingClient').required = true;
+  }
+});
+
+// Existing Client Selection - Show Details
+document.getElementById('existingClient').addEventListener('change', function() {
+  const selected = this.options[this.selectedIndex];
+  const infoBox = document.getElementById('clientInfoBox');
+  
+  if (this.value) {
+    document.getElementById('displayCompany').textContent = selected.dataset.company;
+    document.getElementById('displayContact').textContent = selected.dataset.contact;
+    document.getElementById('displayEmail').textContent = selected.dataset.email;
+    document.getElementById('displayMobile').textContent = selected.dataset.mobile;
+    infoBox.style.display = 'block';
+  } else {
+    infoBox.style.display = 'none';
+  }
+});
+
+// Set current time
+document.addEventListener('DOMContentLoaded', function() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('callTime').value = `${hours}:${minutes}`;
+});
+
+// Form validation
+document.getElementById('callLogForm').addEventListener('submit', function(e) {
+  const notes = document.querySelector('textarea[name="notes"]').value.trim();
+  
+  if (notes.length < 10) {
+    e.preventDefault();
+    alert('Please enter detailed notes (at least 10 characters)');
+    return false;
+  }
+});
+
+showStep(currentStep);
+</script>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .modern-input {
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+    color: #000;
+  }
+
+  .modern-input:focus {
+    border-color: #0152a4 !important;
+    background-color: #f8f9ff !important;
+    box-shadow: 0 0 0 0.2rem rgba(1, 82, 164, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  .step-header h5 {
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .title-underline {
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(to right, #0152a4, #28a745);
+    border: none;
+    margin-top: 10px;
+  }
+
+  .btn-nav {
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin: 0 5px;
+  }
+
+  .btn-nav:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  .card-header.table-title-bar {
+    padding: 20px;
+    font-size: 18px;
+    border-bottom: 3px solid rgba(255,255,255,0.2);
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .client-info-box {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    padding: 20px;
+    border-left: 5px solid #0152a4;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .info-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    padding: 12px 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+
+  .info-badge i {
+    font-size: 20px;
+  }
+
+  .info-badge span {
+    color: #333;
+  }
+
+  textarea.modern-input {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .step-progressbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+  }
+
+  .step {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #ffe1c1 0%, #ffd4a3 100%);
+    color: #333;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+    z-index: 2;
+    transition: all 0.4s ease;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+
+  .step.active {
+    background: linear-gradient(135deg, #0152a4 0%, #0168cc 100%);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(1, 82, 164, 0.4);
+  }
+
+  .step.completed {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+  }
+
+  .progress-line {
+    width: 80px;
+    height: 5px;
+    background-color: #e0e0e0;
+    margin: 0 10px;
+    z-index: 1;
+    transition: all 0.4s ease;
+    border-radius: 10px;
+  }
+
+  .progress-line.active {
+    background: linear-gradient(to right, #28a745, #34ce57);
+    box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+  }
+</style>
+{% endblock %}

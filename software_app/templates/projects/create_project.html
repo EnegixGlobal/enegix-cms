@@ -1,0 +1,298 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}Create Project - {{ client.company_name }}{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-project-diagram me-3 fs-2" style="color: #0152a4;"></i>
+    <div class="fw-bold fs-3">Create New Project</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Create Project</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar fw-bold text-white d-flex align-items-center">
+      <i class="fas fa-briefcase me-2"></i>
+      Client: {{ client.company_name }} ({{ client.client_id }})
+    </div>
+    <div class="card-body p-4">
+      <form method="POST" action="{% url 'create_project' client.id %}" id="projectForm" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Project Information -->
+        <div class="step-header mb-4">
+          <h5 class="text-primary"><i class="fas fa-info-circle me-2"></i>Project Information</h5>
+          <hr class="title-underline">
+        </div>
+        
+        <div class="row">
+          <!-- Project Name -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fas fa-tag me-2 text-primary"></i>Project Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control modern-input required-field" id="project_name" name="project_name" placeholder="Enter project name" required>
+          </div>
+
+          <!-- Project Type -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fas fa-list me-2 text-primary"></i>Project Type <span class="text-danger">*</span></label>
+            <select class="form-control modern-input required-field" id="project_type" name="project_type" required>
+              <option value="">Select Type</option>
+              <option value="seo">SEO Project</option>
+              <option value="development">Development Project</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Start Date -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fas fa-calendar-alt me-2 text-primary"></i>Start Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control modern-input required-field" id="start_date" name="start_date" min="{{ today }}" required>
+          </div>
+
+          <!-- Deadline -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fas fa-calendar-check me-2 text-primary"></i>Deadline <span class="text-danger">*</span></label>
+            <input type="date" class="form-control modern-input required-field" id="deadline" name="deadline" min="{{ today }}" required>
+          </div>
+        </div>
+
+        <!-- 🔥 NEW: Financial Information -->
+        <div class="step-header mb-4 mt-4">
+          <h5 class="text-success"><i class="fas fa-dollar-sign me-2"></i>Financial Information</h5>
+          <hr class="title-underline">
+        </div>
+
+        <div class="row">
+          <!-- Total Project Amount (NEW - Required) -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fas fa-money-bill-wave me-2 text-success"></i>Total Project Amount (₹) <span class="text-danger">*</span></label>
+            <input type="number" step="0.01" min="0.01" class="form-control modern-input required-field" id="total_amount" name="total_amount" placeholder="Enter total project value" required>
+            <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Total value of this project in INR</small>
+          </div>
+
+          <!-- Budget (Optional - for internal planning) -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fas fa-calculator me-2 text-primary"></i>Internal Budget (Optional)</label>
+            <input type="number" step="0.01" class="form-control modern-input" id="budget" name="budget" placeholder="Enter internal budget">
+            <small class="text-muted"><i class="fas fa-info-circle me-1"></i>For internal planning purposes</small>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Description -->
+          <div class="col-md-12 mb-3">
+            <label class="form-label"><i class="fas fa-align-left me-2 text-primary"></i>Project Description <span class="text-danger">*</span></label>
+            <textarea class="form-control modern-input required-field" id="description" name="description" rows="5" placeholder="Enter project description" required></textarea>
+          </div>
+        </div>
+
+        <!-- Document Uploads -->
+        <div class="step-header mb-4 mt-4">
+          <h5 class="text-primary"><i class="fas fa-file-upload me-2"></i>Document Uploads</h5>
+          <hr class="title-underline">
+        </div>
+
+        <div class="row">
+          <!-- Agreement Upload -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fas fa-file-contract me-2 text-primary"></i>Agreement Document (Optional)</label>
+            <div class="file-upload-wrapper">
+              <input type="file" class="form-control modern-input file-input" id="agreement" name="agreement" accept=".pdf,.doc,.docx">
+              <div class="file-info mt-2" id="agreementInfo" style="display:none;">
+                <i class="fas fa-file-pdf text-danger me-2"></i>
+                <span id="agreementName"></span>
+                <button type="button" class="btn btn-sm btn-link text-danger" onclick="clearFile('agreement')">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+            <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Supported formats: PDF, DOC, DOCX</small>
+          </div>
+
+          <!-- Module Upload -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fas fa-file-archive me-2 text-primary"></i>Module/Resource File (Optional)</label>
+            <div class="file-upload-wrapper">
+              <input type="file" class="form-control modern-input file-input" id="module_file" name="module_file" accept=".zip,.rar,.pdf,.doc,.docx,.xlsx">
+              <div class="file-info mt-2" id="moduleInfo" style="display:none;">
+                <i class="fas fa-file-archive text-warning me-2"></i>
+                <span id="moduleName"></span>
+                <button type="button" class="btn btn-sm btn-link text-danger" onclick="clearFile('module_file')">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+            <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Supported formats: ZIP, RAR, PDF, DOC, DOCX, XLSX</small>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="d-flex justify-content-between mt-5 pt-3 border-top">
+          <a href="{% url 'project_list' %}" class="btn btn-secondary btn-nav">
+            <i class="fas fa-arrow-left me-2"></i>Cancel
+          </a>
+          <button type="submit" class="btn btn-primary btn-nav">
+            <i class="fas fa-check-circle me-2"></i>Create Project
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+    // Validate deadline is after start date
+    document.getElementById('start_date').addEventListener('change', function() {
+        document.getElementById('deadline').min = this.value;
+    });
+
+    document.getElementById('deadline').addEventListener('change', function() {
+        const startDate = document.getElementById('start_date').value;
+        if (startDate && this.value < startDate) {
+            alert('Deadline cannot be before start date!');
+            this.value = '';
+        }
+    });
+
+    // File upload handlers
+    document.getElementById('agreement').addEventListener('change', function() {
+        showFileName('agreement', this.files[0]);
+    });
+
+    document.getElementById('module_file').addEventListener('change', function() {
+        showFileName('module_file', this.files[0]);
+    });
+
+    function showFileName(inputId, file) {
+        if (file) {
+            const infoDiv = document.getElementById(inputId + 'Info');
+            const nameSpan = document.getElementById(inputId === 'agreement' ? 'agreementName' : 'moduleName');
+            nameSpan.textContent = file.name;
+            infoDiv.style.display = 'block';
+        }
+    }
+
+    function clearFile(inputId) {
+        document.getElementById(inputId).value = '';
+        document.getElementById(inputId + 'Info').style.display = 'none';
+    }
+
+    // 🔥 NEW: Format currency input
+    document.getElementById('total_amount').addEventListener('blur', function() {
+        if (this.value) {
+            this.value = parseFloat(this.value).toFixed(2);
+        }
+    });
+
+    document.getElementById('budget').addEventListener('blur', function() {
+        if (this.value) {
+            this.value = parseFloat(this.value).toFixed(2);
+        }
+    });
+</script>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .modern-input {
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+    color: #000;
+  }
+
+  .modern-input:focus {
+    border-color: #0152a4 !important;
+    background-color: #f8f9ff !important;
+    box-shadow: 0 0 0 0.2rem rgba(1, 82, 164, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  .step-header h5 {
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .title-underline {
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(to right, #0152a4, #28a745);
+    border: none;
+    margin-top: 10px;
+  }
+
+  .btn-nav {
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin: 0 5px;
+  }
+
+  .btn-nav:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  .card-header.table-title-bar {
+    padding: 20px;
+    font-size: 18px;
+    border-bottom: 3px solid rgba(255,255,255,0.2);
+  }
+
+  label .text-danger {
+    font-weight: normal;
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .file-upload-wrapper {
+    position: relative;
+  }
+
+  .file-input {
+    cursor: pointer;
+  }
+
+  .file-info {
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .file-info span {
+    flex: 1;
+    font-size: 14px;
+    color: #333;
+  }
+</style>
+{% endblock %}

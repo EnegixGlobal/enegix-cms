@@ -1,0 +1,264 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}My Work Reports{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-clipboard-list me-3 fs-2" style="color: #0152a4;"></i>
+    <div class="fw-bold fs-3">My Work Reports</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">My Work Reports</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar d-flex justify-content-between align-items-center">
+      <span class="fw-bold text-white"><i class="fas fa-list-ul me-2"></i>All My Reports</span>
+      <a href="{% url 'add_work_report' %}" class="btn btn-light btn-add-new">
+        <i class="fas fa-plus-circle me-2"></i>Submit New Report
+      </a>
+    </div>
+    <div class="card-body p-4">
+      <div class="table-responsive">
+        <table class="table table-hover modern-table" id="reportTable">
+          <thead>
+            <tr>
+              <th><i class="fas fa-hashtag me-2"></i>Report ID</th>
+              <th><i class="fas fa-folder-open me-2"></i>Project</th>
+              <th><i class="fas fa-calendar-alt me-2"></i>Work Date</th>
+              <th><i class="fas fa-clock me-2"></i>Hours</th>
+              <th><i class="fas fa-signal me-2"></i>Status</th>
+              <th><i class="fas fa-user-check me-2"></i>Reviewed</th>
+              <th><i class="fas fa-calendar me-2"></i>Submitted On</th>
+              <th><i class="fas fa-cogs me-2"></i>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for report in reports %}
+            <tr class="table-row-hover">
+              <td><strong class="report-id">{{ report.report_id }}</strong></td>
+              <td>
+                <strong>{{ report.project_name }}</strong><br>
+                <small class="text-muted">{{ report.project_id_display }}</small>
+              </td>
+              <td>{{ report.work_date }}</td>
+              <td><span class="badge badge-hours">{{ report.hours_worked }} hrs</span></td>
+              <td>
+                {% if report.overall_status == 'completed' %}
+                <span class="badge modern-badge badge-completed">
+                  <i class="fas fa-check-circle me-1"></i>Completed
+                </span>
+                {% elif report.overall_status == 'in_progress' %}
+                <span class="badge modern-badge badge-in-progress">
+                  <i class="fas fa-spinner me-1"></i>In Progress
+                </span>
+                {% elif report.overall_status == 'blocked' %}
+                <span class="badge modern-badge badge-blocked">
+                  <i class="fas fa-exclamation-circle me-1"></i>Blocked
+                </span>
+                {% else %}
+                <span class="badge modern-badge badge-pending">
+                  <i class="fas fa-clock me-1"></i>Pending
+                </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if report.is_reviewed %}
+                <span class="badge badge-reviewed">
+                  <i class="fas fa-check me-1"></i>Reviewed
+                </span>
+                <small class="d-block text-muted">{{ report.reviewed_by_name }}</small>
+                {% else %}
+                <span class="badge badge-not-reviewed">
+                  <i class="fas fa-hourglass-half me-1"></i>Pending Review
+                </span>
+                {% endif %}
+              </td>
+              <td>{{ report.created_at|date:"d M Y" }}</td>
+              <td>
+                <div class="action-buttons">
+                  <a href="{% url 'view_work_report' report.id %}" class="btn btn-action btn-info" title="View Details">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  {% if not report.is_reviewed %}
+                  <a href="{% url 'edit_work_report' report.id %}" class="btn btn-action btn-warning" title="Edit">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <form method="POST" action="{% url 'delete_work_report' report.id %}" style="display:inline;" onsubmit="return confirm('Delete this report?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-action btn-danger" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" class="text-center text-muted py-5">
+                <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
+                <p>No work reports submitted yet.</p>
+                <a href="{% url 'add_work_report' %}" class="btn btn-primary mt-2">
+                  <i class="fas fa-plus-circle me-2"></i>Submit Your First Report
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .btn-add-new {
+    padding: 10px 25px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: white;
+    color: #0152a4;
+    border: 2px solid white;
+  }
+
+  .btn-add-new:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255,255,255,0.3);
+    background: #f8f9fa;
+  }
+
+  .modern-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .modern-table thead tr {
+    background: linear-gradient(135deg, #0152a4 0%, #0168cc 100%);
+    color: white;
+  }
+
+  .modern-table thead th {
+    padding: 15px;
+    font-weight: 600;
+    border: none;
+    vertical-align: middle;
+  }
+
+  .modern-table tbody td {
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .table-row-hover {
+    transition: all 0.3s ease;
+  }
+
+  .table-row-hover:hover {
+    background: linear-gradient(135deg, #f8f9ff 0%, #e9ecef 100%);
+    transform: scale(1.01);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  }
+
+  .report-id {
+    color: #0152a4;
+    font-size: 14px;
+  }
+
+  .badge-hours {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-weight: 600;
+  }
+
+  .badge-reviewed {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-weight: 600;
+  }
+
+  .badge-not-reviewed {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    color: black;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-weight: 600;
+  }
+
+  .modern-badge {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .badge-completed {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+  }
+
+  .badge-in-progress {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .badge-pending {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    color: black;
+  }
+
+  .badge-blocked {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    color: white;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 5px;
+  }
+
+  .btn-action {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.3s ease;
+  }
+
+  .btn-action:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+</style>
+{% endblock %}

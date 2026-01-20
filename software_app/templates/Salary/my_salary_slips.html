@@ -1,0 +1,987 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- Enhanced Header with Gradient -->
+<div class="ribbon-header-enhanced d-flex justify-content-between align-items-center px-4 pb-4 mb-4">
+  <div class="d-flex align-items-center">
+    <div class="icon-wrapper me-3">
+      <i class="fas fa-file-invoice-dollar"></i>
+    </div>
+    <div>
+      <div class="page-title">My Salary Slips</div>
+      <div class="page-subtitle">
+        <i class="fas fa-history me-2"></i>View your complete salary history
+      </div>
+    </div>
+  </div>
+  <div class="breadcrumb-modern">
+    <span class="breadcrumb-item">HOME</span>
+    <i class="fas fa-chevron-right mx-2"></i>
+    <span class="breadcrumb-item active">My Salary</span>
+  </div>
+</div>
+
+<!-- Enhanced Employee Info Card -->
+<div class="container-fluid mt-2 mb-4">
+  <div class="card modern-card">
+    <div class="card-header-modern">
+      <h5 class="mb-0">
+        <i class="fas fa-user-tie me-2"></i>Employee Information
+      </h5>
+    </div>
+    <div class="card-body p-4">
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <div class="info-item">
+            <div class="info-label">
+              <i class="fas fa-id-badge me-2"></i>Employee ID
+            </div>
+            <div class="info-value">{{ employee.employee_id }}</div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="info-item">
+            <div class="info-label">
+              <i class="fas fa-user me-2"></i>Name
+            </div>
+            <div class="info-value">{{ employee.full_name }}</div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="info-item">
+            <div class="info-label">
+              <i class="fas fa-briefcase me-2"></i>Designation
+            </div>
+            <div class="info-value">{{ employee.designation }}</div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="info-item">
+            <div class="info-label">
+              <i class="fas fa-money-bill-wave me-2"></i>Base Salary
+            </div>
+            <div class="info-value">₹{{ employee.base_salary|floatformat:2 }}</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Enhanced Training Status Alert -->
+      {% if employee.is_in_training %}
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="alert-modern training-alert">
+            <div class="alert-icon">
+              <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="alert-content">
+              <div class="alert-title">Training Period Active</div>
+              <div class="alert-message">
+                You are currently in training 
+                (<span id="trainingStartDate">{{ employee.training_start_date }}</span> to <span id="trainingEndDate"></span>)
+              </div>
+              <div class="alert-note">
+                <i class="fas fa-info-circle me-1"></i>Training salary: ₹100 per day
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Summary Cards -->
+{% if salaries %}
+<div class="container-fluid mb-4">
+  <div class="row">
+    <div class="col-md-3 mb-3">
+      <div class="summary-card primary">
+        <div class="summary-icon">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="summary-content">
+          <div class="summary-title">Total Months</div>
+          <div class="summary-value">{{ salaries|length }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="summary-card success">
+        <div class="summary-icon">
+          <i class="fas fa-coins"></i>
+        </div>
+        <div class="summary-content">
+          <div class="summary-title">Total Earned</div>
+          <div class="summary-value" id="totalEarned">₹0</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="summary-card info">
+        <div class="summary-icon">
+          <i class="fas fa-hand-holding-usd"></i>
+        </div>
+        <div class="summary-content">
+          <div class="summary-title">Total Paid</div>
+          <div class="summary-value" id="totalPaid">₹0</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="summary-card warning">
+        <div class="summary-icon">
+          <i class="fas fa-wallet"></i>
+        </div>
+        <div class="summary-content">
+          <div class="summary-title">Pending Balance</div>
+          <div class="summary-value" id="pendingBalance">₹0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Enhanced Salary Slips Table -->
+<div class="container-fluid">
+  <div class="card modern-card">
+    <div class="card-header-modern">
+      <h5 class="mb-0">
+        <i class="fas fa-table me-2"></i>Salary History
+      </h5>
+    </div>
+
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="modern-table" id="salaryTable">
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Month/Year</th>
+              <th>Salary ID</th>
+              <th>Attendance Summary</th>
+              <th>Base Salary</th>
+              <th>Allowances</th>
+              <th>Gross Salary</th>
+              <th>Deductions</th>
+              <th>Net Payable</th>
+              <th>Paid Amount</th>
+              <th>Balance</th>
+              <th>Payment Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if salaries %}
+              {% for salary in salaries %}
+              <tr data-net-payable="{{ salary.net_payable }}" 
+                  data-paid="{{ salary.paid_amount }}" 
+                  data-balance="{{ salary.remaining_balance }}"
+                  data-present="{{ salary.total_present }}"
+                  data-absent="{{ salary.total_absent }}"
+                  data-half-days="{{ salary.total_half_days }}"
+                  data-leaves="{{ salary.total_leaves }}"
+                  data-holidays="{{ salary.total_holidays|default:0 }}"
+                  data-lwp="{{ salary.total_lwp|default:0 }}"
+                  data-training="{{ salary.total_training|default:0 }}">
+                <td>{{ forloop.counter }}</td>
+                <td class="month-cell">{{ salary.month }}/{{ salary.year }}</td>
+                <td class="id-cell">{{ salary.salary_id }}</td>
+                <td class="attendance-cell">
+                  <div class="attendance-badges">
+                    <span class="status-badge present">{{ salary.total_present }}</span>
+                    <span class="status-badge absent">{{ salary.total_absent }}</span>
+                    <span class="status-badge half-day">{{ salary.total_half_days }}</span>
+                    <span class="status-badge leave">{{ salary.total_leaves }}</span>
+                    {% if salary.total_holidays > 0 %}
+                    <span class="status-badge holiday">{{ salary.total_holidays }}</span>
+                    {% endif %}
+                    {% if salary.total_lwp > 0 %}
+                    <span class="status-badge lwp">{{ salary.total_lwp }}</span>
+                    {% endif %}
+                    {% if salary.total_training > 0 %}
+                    <span class="status-badge training">{{ salary.total_training }}</span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td class="amount-cell">₹{{ salary.base_salary|floatformat:2 }}</td>
+                <td class="allowances-cell">
+                  <div class="allowance-item">
+                    <span class="allowance-label">Bonus:</span>
+                    <span class="allowance-value">₹{{ salary.bonus|floatformat:2 }}</span>
+                  </div>
+                  <div class="allowance-item">
+                    <span class="allowance-label">Travel:</span>
+                    <span class="allowance-value">₹{{ salary.travel_allowance|floatformat:2 }}</span>
+                  </div>
+                  {% if salary.total_training > 0 %}
+                  <div class="allowance-item">
+                    <span class="allowance-label">Training:</span>
+                    <span class="allowance-value">₹{% widthratio salary.total_training 1 100 %}</span>
+                  </div>
+                  {% endif %}
+                </td>
+                <td class="amount-cell gross-cell">₹{{ salary.gross_salary|floatformat:2 }}</td>
+                <td class="deductions-cell">
+                  <div class="deduction-item">
+                    <span class="deduction-label">PF:</span>
+                    <span class="deduction-value">₹{{ salary.pf_amount|floatformat:2 }}</span>
+                  </div>
+                  <div class="deduction-item">
+                    <span class="deduction-label">ESI:</span>
+                    <span class="deduction-value">₹{{ salary.esi_amount|floatformat:2 }}</span>
+                  </div>
+                  <div class="deduction-item total">
+                    <span class="deduction-label">Total:</span>
+                    <span class="deduction-value">₹{{ salary.total_deductions|floatformat:2 }}</span>
+                  </div>
+                </td>
+                <td class="amount-cell net-cell">₹{{ salary.net_payable|floatformat:2 }}</td>
+                <td class="amount-cell">₹{{ salary.paid_amount|floatformat:2 }}</td>
+                <td class="amount-cell {% if salary.remaining_balance >= 0 %}positive{% else %}negative{% endif %}">
+                  ₹{{ salary.remaining_balance|floatformat:2 }}
+                </td>
+                <td class="date-cell">{{ salary.payment_date|date:"d-M-Y"|default:"-" }}</td>
+                <td class="action-cell">
+                  <a href="{% url 'view_salary_slip' salary.id %}" class="btn-action" target="_blank">
+                    <i class="fas fa-file-pdf"></i> View
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="13" class="empty-state">
+                  <div class="empty-icon">
+                    <i class="fas fa-inbox"></i>
+                  </div>
+                  <div class="empty-text">No salary slips available yet</div>
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Attendance Summary Card -->
+{% if salaries %}
+<div class="container-fluid mt-4">
+  <div class="card modern-card">
+    <div class="card-header-modern">
+      <h5 class="mb-0">
+        <i class="fas fa-chart-pie me-2"></i>Overall Attendance Summary
+      </h5>
+    </div>
+    <div class="card-body p-4">
+      <div class="row text-center mb-3">
+        <div class="col-md-2 col-4 mb-3">
+          <div class="attendance-stat present">
+            <div class="stat-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-value" id="totalPresent">0</div>
+            <div class="stat-label">Present</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-4 mb-3">
+          <div class="attendance-stat absent">
+            <div class="stat-icon">
+              <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="stat-value" id="totalAbsent">0</div>
+            <div class="stat-label">Absent</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-4 mb-3">
+          <div class="attendance-stat half-day">
+            <div class="stat-icon">
+              <i class="fas fa-adjust"></i>
+            </div>
+            <div class="stat-value" id="totalHalfDays">0</div>
+            <div class="stat-label">Half Day</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-4 mb-3">
+          <div class="attendance-stat leave">
+            <div class="stat-icon">
+              <i class="fas fa-plane"></i>
+            </div>
+            <div class="stat-value" id="totalLeaves">0</div>
+            <div class="stat-label">Leave</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-4 mb-3">
+          <div class="attendance-stat holiday">
+            <div class="stat-icon">
+              <i class="fas fa-umbrella-beach"></i>
+            </div>
+            <div class="stat-value" id="totalHolidays">0</div>
+            <div class="stat-label">Holiday</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-4 mb-3">
+          <div class="attendance-stat lwp">
+            <div class="stat-icon">
+              <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-value" id="totalLWP">0</div>
+            <div class="stat-label">LWP</div>
+          </div>
+        </div>
+      </div>
+      <div class="row text-center">
+        <div class="col-md-2 col-4 mb-3 mx-auto">
+          <div class="attendance-stat training">
+            <div class="stat-icon">
+              <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="stat-value" id="totalTraining">0</div>
+            <div class="stat-label">Training</div>
+          </div>
+        </div>
+      </div>
+      <div class="legend-container">
+        <div class="legend-item">
+          <span class="legend-badge present"></span>
+          <span class="legend-text">Present</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-badge absent"></span>
+          <span class="legend-text">Absent</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-badge half-day"></span>
+          <span class="legend-text">Half Day</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-badge leave"></span>
+          <span class="legend-text">Leave</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-badge holiday"></span>
+          <span class="legend-text">Holiday</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-badge lwp"></span>
+          <span class="legend-text">Leave Without Pay</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-badge training"></span>
+          <span class="legend-text">Training (₹100/day)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+// Calculate totals on page load
+document.addEventListener('DOMContentLoaded', function() {
+  calculateTotals();
+  
+  // Calculate training end date
+  {% if employee.is_in_training %}
+  const startDate = new Date(document.getElementById('trainingStartDate').textContent);
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + 6); // Add 6 days to get 7-day training period
+  
+  // Format date as dd-MMM-YYYY
+  const options = { day: 'numeric', month: 'short', year: 'numeric' };
+  document.getElementById('trainingEndDate').textContent = endDate.toLocaleDateString('en-GB', options);
+  {% endif %}
+});
+
+function calculateTotals() {
+  const rows = document.querySelectorAll('tbody tr[data-net-payable]');
+  
+  let totalEarned = 0;
+  let totalPaid = 0;
+  let pendingBalance = 0;
+  let totalPresent = 0;
+  let totalAbsent = 0;
+  let totalHalfDays = 0;
+  let totalLeaves = 0;
+  let totalHolidays = 0;
+  let totalLWP = 0;
+  let totalTraining = 0;
+  
+  rows.forEach(row => {
+    totalEarned += parseFloat(row.getAttribute('data-net-payable'));
+    totalPaid += parseFloat(row.getAttribute('data-paid'));
+    pendingBalance += parseFloat(row.getAttribute('data-balance'));
+    totalPresent += parseInt(row.getAttribute('data-present'));
+    totalAbsent += parseInt(row.getAttribute('data-absent'));
+    totalHalfDays += parseInt(row.getAttribute('data-half-days'));
+    totalLeaves += parseInt(row.getAttribute('data-leaves'));
+    totalHolidays += parseInt(row.getAttribute('data-holidays'));
+    totalLWP += parseInt(row.getAttribute('data-lwp'));
+    totalTraining += parseInt(row.getAttribute('data-training'));
+  });
+  
+  // Update summary cards with formatted numbers
+  document.getElementById('totalEarned').textContent = '₹' + totalEarned.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  document.getElementById('totalPaid').textContent = '₹' + totalPaid.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  document.getElementById('pendingBalance').textContent = '₹' + pendingBalance.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  
+  // Update attendance summary
+  document.getElementById('totalPresent').textContent = totalPresent;
+  document.getElementById('totalAbsent').textContent = totalAbsent;
+  document.getElementById('totalHalfDays').textContent = totalHalfDays;
+  document.getElementById('totalLeaves').textContent = totalLeaves;
+  document.getElementById('totalHolidays').textContent = totalHolidays;
+  document.getElementById('totalLWP').textContent = totalLWP;
+  document.getElementById('totalTraining').textContent = totalTraining;
+}
+</script>
+
+<style>
+:root {
+  --teal-primary: #14b8a6;
+  --teal-dark: #0d9488;
+  --teal-light: #5eead4;
+  --teal-lighter: #ccfbf1;
+  --gradient-start: #14b8a6;
+  --gradient-end: #0891b2;
+}
+
+/* Enhanced Header */
+.ribbon-header-enhanced {
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  border-radius: 15px;
+  padding: 2rem;
+  color: white;
+  box-shadow: 0 10px 30px rgba(20, 184, 166, 0.3);
+  margin-bottom: 2rem;
+}
+
+.icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+}
+
+.page-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+.breadcrumb-modern {
+  color: rgba(255,255,255,0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.breadcrumb-item.active {
+  opacity: 0.7;
+}
+
+/* Modern Cards */
+.modern-card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.modern-card:hover {
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.card-header-modern {
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  color: white;
+  padding: 1.25rem 1.5rem;
+  border: none;
+}
+
+.card-header-modern h5 {
+  margin: 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+/* Employee Info */
+.info-item {
+  background: var(--teal-lighter);
+  border-radius: 10px;
+  padding: 1rem;
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.info-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(20, 184, 166, 0.1);
+}
+
+.info-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--teal-dark);
+  margin-bottom: 0.5rem;
+}
+
+.info-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+/* Training Alert */
+.alert-modern {
+  display: flex;
+  align-items: center;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  border: none;
+}
+
+.training-alert {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  border-left: 4px solid #0ea5e9;
+}
+
+.alert-icon {
+  font-size: 2rem;
+  color: #0284c7;
+  margin-right: 1rem;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #0c4a6e;
+  margin-bottom: 0.25rem;
+}
+
+.alert-message {
+  font-weight: 500;
+  color: #075985;
+  margin-bottom: 0.5rem;
+}
+
+.alert-note {
+  font-size: 0.85rem;
+  color: #0369a1;
+}
+
+/* Summary Cards */
+.summary-card {
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  color: white;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.summary-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.summary-card.primary {
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+}
+
+.summary-card.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.summary-card.info {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.summary-card.warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.summary-icon {
+  font-size: 2.5rem;
+  opacity: 0.8;
+  margin-right: 1rem;
+}
+
+.summary-content {
+  flex: 1;
+}
+
+.summary-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  opacity: 0.9;
+  margin-bottom: 0.25rem;
+}
+
+.summary-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+/* Modern Table */
+.modern-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.modern-table thead th {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: white;
+  padding: 1rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+}
+
+.modern-table tbody td {
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+.modern-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.modern-table tbody tr:hover {
+  background: var(--teal-lighter);
+}
+
+.modern-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+/* Table Cells */
+.month-cell {
+  font-weight: 600;
+  color: var(--teal-dark);
+}
+
+.id-cell {
+  font-family: monospace;
+  background: #f1f5f9;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.amount-cell {
+  font-weight: 600;
+  text-align: right;
+}
+
+.gross-cell {
+  color: #059669;
+}
+
+.net-cell {
+  color: #0369a1;
+  font-size: 1.1rem;
+}
+
+.positive {
+  color: #059669;
+}
+
+.negative {
+  color: #dc2626;
+}
+
+.date-cell {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* Attendance Badges */
+.attendance-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 30px;
+  text-align: center;
+}
+
+.status-badge.present {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.absent {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge.half-day {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.leave {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.holiday {
+  background: #e9d5ff;
+  color: #6b21a8;
+}
+
+.status-badge.lwp {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.status-badge.training {
+  background: #fed7aa;
+  color: #9a3412;
+}
+
+/* Allowances and Deductions */
+.allowances-cell, .deductions-cell {
+  font-size: 0.8rem;
+}
+
+.allowance-item, .deduction-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.allowance-label, .deduction-label {
+  color: #64748b;
+}
+
+.allowance-value, .deduction-value {
+  font-weight: 600;
+}
+
+.deduction-item.total {
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 0.25rem;
+  margin-top: 0.5rem;
+  font-weight: 700;
+}
+
+/* Action Button */
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: var(--teal-primary);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+  background: var(--teal-dark);
+  transform: translateY(-2px);
+}
+
+/* Empty State */
+.empty-state {
+  padding: 3rem;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* Attendance Stats */
+.attendance-stat {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.attendance-stat:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.attendance-stat.present .stat-icon {
+  color: #10b981;
+}
+
+.attendance-stat.absent .stat-icon {
+  color: #ef4444;
+}
+
+.attendance-stat.half-day .stat-icon {
+  color: #f59e0b;
+}
+
+.attendance-stat.leave .stat-icon {
+  color: #3b82f6;
+}
+
+.attendance-stat.holiday .stat-icon {
+  color: #8b5cf6;
+}
+
+.attendance-stat.lwp .stat-icon {
+  color: #6b7280;
+}
+
+.attendance-stat.training .stat-icon {
+  color: #f97316;
+}
+
+/* Legend */
+.legend-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-badge {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.legend-badge.present {
+  background: #10b981;
+}
+
+.legend-badge.absent {
+  background: #ef4444;
+}
+
+.legend-badge.half-day {
+  background: #f59e0b;
+}
+
+.legend-badge.leave {
+  background: #3b82f6;
+}
+
+.legend-badge.holiday {
+  background: #8b5cf6;
+}
+
+.legend-badge.lwp {
+  background: #6b7280;
+}
+
+.legend-badge.training {
+  background: #f97316;
+}
+
+.legend-text {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .ribbon-header-enhanced {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .icon-wrapper {
+    margin: 0 auto 1rem;
+  }
+
+  .breadcrumb-modern {
+    margin-top: 1rem;
+  }
+
+  .summary-card {
+    margin-bottom: 1rem;
+  }
+
+  .modern-table {
+    font-size: 0.8rem;
+  }
+
+  .attendance-badges {
+    justify-content: flex-start;
+  }
+}
+</style>
+
+{% endblock %}

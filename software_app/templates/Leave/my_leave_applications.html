@@ -1,0 +1,227 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}My Leave Applications{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-file-alt me-3 fs-3"></i>
+    <div>
+      <div class="fw-bold fs-3">My Leave Applications</div>
+      <small class="text-muted">View all your leave requests and their status</small>
+    </div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black">HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">My Leaves</span>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <!-- Leave Balance Summary -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-2">
+              <div class="p-3 bg-success bg-opacity-10 rounded border border-success">
+                <h3 class="mb-0 text-success">{{ leave_balance.casual_leaves_available_this_month }}</h3>
+                <small class="text-muted">Casual (This Month)</small>
+                <div class="mt-1">
+                  <small class="badge bg-success">1 per month</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="p-3 bg-info bg-opacity-10 rounded border border-info">
+                <h3 class="mb-0 text-info">{{ leave_balance.sick_leave_balance|floatformat:0 }}</h3>
+                <small class="text-muted">Sick (Yearly)</small>
+                <div class="mt-1">
+                  <small class="badge bg-info">6 per year</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="p-3 bg-primary bg-opacity-10 rounded border border-primary">
+                <h3 class="mb-0 text-primary">{{ leave_balance.casual_leaves_available_this_month|add:leave_balance.sick_leave_balance|floatformat:0 }}</h3>
+                <small class="text-muted">Total Available</small>
+                <div class="mt-1">
+                  <small class="badge bg-primary">Current Balance</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 bg-light rounded border">
+                <small class="text-muted d-block">Current Period</small>
+                <h5 class="mb-0 text-dark">Month {{ leave_balance.current_month }}/{{ leave_balance.current_year }}</h5>
+                <small class="text-muted">Casual resets monthly, Sick yearly</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <a href="{% url 'apply_leave' %}" class="btn btn-primary w-100 h-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-plus-circle me-2"></i>Apply New Leave
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Applications List -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header table-title-bar text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>All Leave Applications
+          </h5>
+        </div>
+
+        <div class="card-body p-0">
+          {% if applications %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="bg-dark text-white">
+                <tr>
+                  <th class="px-4 py-3">Leave ID</th>
+                  <th class="px-4 py-3">Type</th>
+                  <th class="px-4 py-3">From Date</th>
+                  <th class="px-4 py-3">To Date</th>
+                  <th class="px-4 py-3">Days</th>
+                  <th class="px-4 py-3">Deducted</th>
+                  <th class="px-4 py-3">Unpaid</th>
+                  <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">Applied On</th>
+                  <th class="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for app in applications %}
+                <tr>
+                  <td class="px-4 py-3">
+                    <strong class="text-primary">{{ app.leave_id }}</strong>
+                  </td>
+                  <td class="px-4 py-3">
+                    {% if app.leave_type == 'casual' %}
+                      <span class="badge bg-success">Casual</span>
+                    {% elif app.leave_type == 'sick' %}
+                      <span class="badge bg-info">Sick</span>
+                    {% elif app.leave_type == 'combined' %}
+                      <span class="badge bg-warning text-dark">Combined</span>
+                      <br>
+                      <small class="text-muted">
+                        C:{{ app.casual_days_requested }} + S:{{ app.sick_days_requested }}
+                      </small>
+                    {% else %}
+                      <span class="badge bg-secondary">Unpaid</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3">{{ app.from_date|date:"d M Y" }}</td>
+                  <td class="px-4 py-3">{{ app.to_date|date:"d M Y" }}</td>
+                  <td class="px-4 py-3">
+                    <strong>{{ app.total_days }}</strong>
+                  </td>
+                  <td class="px-4 py-3">
+                    {% if app.status == 'approved' %}
+                      <small class="text-success">
+                        <strong>C:</strong> {{ app.casual_days_deducted }}<br>
+                        <strong>S:</strong> {{ app.sick_days_deducted }}
+                      </small>
+                      {% if app.refund_processed %}
+                        <br><span class="badge bg-info">Refunded</span>
+                      {% endif %}
+                    {% else %}
+                      <small class="text-muted">Pending</small>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3">
+                    {% if app.status == 'approved' %}
+                      {% if app.unpaid_days > 0 %}
+                        <span class="badge bg-danger">{{ app.unpaid_days }} days</span>
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3">
+                    {% if app.status == 'pending' %}
+                      <span class="badge bg-warning text-dark">
+                        <i class="fas fa-clock me-1"></i>Pending
+                      </span>
+                    {% elif app.status == 'approved' %}
+                      <span class="badge bg-success">
+                        <i class="fas fa-check-circle me-1"></i>Approved
+                      </span>
+                      {% if app.refund_processed %}
+                        <br><small class="text-info"><i class="fas fa-undo"></i> Refunded</small>
+                      {% endif %}
+                    {% elif app.status == 'rejected' %}
+                      <span class="badge bg-danger">
+                        <i class="fas fa-times-circle me-1"></i>Rejected
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3">
+                    <small>{{ app.applied_date|date:"d M Y, g:i A" }}</small>
+                  </td>
+                  <td class="px-4 py-3">
+                    <a href="{% url 'view_leave_detail' app.id %}" 
+                       class="btn btn-sm btn-info" 
+                       title="View Details">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+                
+                <!-- HR Remarks Row -->
+                {% if app.hr_remarks and app.status != 'pending' %}
+                <tr class="bg-light">
+                  <td colspan="10" class="px-4 py-2">
+                    <div class="d-flex align-items-start">
+                      <i class="fas fa-comment-dots text-muted me-2 mt-1"></i>
+                      <div>
+                        <strong class="text-muted">HR Remarks:</strong>
+                        <p class="mb-0 ms-2">{{ app.hr_remarks }}</p>
+                        {% if app.approved_by_name %}
+                        <small class="text-muted">
+                          - {{ app.approved_by_name }} ({{ app.approval_date|date:"d M Y, g:i A" }})
+                        </small>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No Leave Applications Found</h5>
+            <p class="text-muted">You haven't applied for any leave yet.</p>
+            <a href="{% url 'apply_leave' %}" class="btn btn-primary mt-3">
+              <i class="fas fa-plus-circle me-2"></i>Apply for Leave
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+</style>
+
+{% endblock %}

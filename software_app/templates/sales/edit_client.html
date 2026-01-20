@@ -1,0 +1,324 @@
+{% extends "base2.html" %}
+{% load static %}
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-edit me-3 fs-2" style="color: #0152a4;"></i>
+    <div class="fw-bold fs-3">Edit Client - {{ client.client_id }}</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Edit Client</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <div class="row">
+    <!-- Edit Form -->
+    <div class="col-md-6">
+      <form method="POST" id="clientForm">
+        {% csrf_token %}
+        <div class="card shadow-lg mb-4 modern-card">
+          <div class="card-header table-title-bar fw-bold text-white d-flex align-items-center">
+            <i class="fas fa-clipboard-list me-2"></i>
+            Client Information
+          </div>
+          <div class="card-body p-4">
+            
+            <div class="step-header mb-4">
+              <h5 class="text-primary"><i class="fas fa-building me-2"></i>Company Details</h5>
+              <hr class="title-underline">
+            </div>
+            
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label class="form-label"><i class="fas fa-building me-2 text-primary"></i>Company Name <span class="text-danger">*</span></label>
+                <input type="text" name="company_name" class="form-control modern-input" value="{{ client.company_name }}" required />
+              </div>
+              <div class="col-md-12 mb-3">
+                <label class="form-label"><i class="fas fa-user-tie me-2 text-primary"></i>Contact Person <span class="text-danger">*</span></label>
+                <input type="text" name="contact_person" class="form-control modern-input" value="{{ client.contact_person }}" required />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label class="form-label"><i class="fas fa-envelope me-2 text-primary"></i>Email <span class="text-danger">*</span></label>
+                <input type="email" name="email" class="form-control modern-input" value="{{ client.email }}" required />
+              </div>
+              <div class="col-md-12 mb-3">
+                <label class="form-label"><i class="fas fa-mobile-alt me-2 text-primary"></i>Mobile Number <span class="text-danger">*</span></label>
+                <input type="tel" name="mobile" class="form-control modern-input" value="{{ client.mobile }}" maxlength="15" required />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label class="form-label"><i class="fas fa-signal me-2 text-primary"></i>Status <span class="text-danger">*</span></label>
+                <select name="status" class="form-control modern-input" required>
+                  <option value="contacted" {% if client.status == 'contacted' %}selected{% endif %}>Contacted</option>
+                  <option value="follow_up" {% if client.status == 'follow_up' %}selected{% endif %}>Follow Up</option>
+                  <option value="interested" {% if client.status == 'interested' %}selected{% endif %}>Interested</option>
+                  <option value="not_interested" {% if client.status == 'not_interested' %}selected{% endif %}>Not Interested</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label class="form-label"><i class="fas fa-map-marked-alt me-2 text-primary"></i>Address</label>
+                <textarea name="address" class="form-control modern-input" rows="3">{{ client.address }}</textarea>
+              </div>
+            </div>
+
+            <div class="text-end mt-4 pt-3 border-top">
+              <a href="{% url 'client_list' %}" class="btn btn-secondary btn-nav">
+                <i class="fas fa-times me-2"></i>Cancel
+              </a>
+              <button type="submit" class="btn btn-success btn-nav">
+                <i class="fas fa-check-circle me-2"></i>Update Client
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Call History & Add Call Log -->
+    <div class="col-md-6">
+      <!-- Add Call Log -->
+      <div class="card shadow-lg mb-4 modern-card">
+        <div class="card-header table-title-bar fw-bold text-white d-flex align-items-center">
+          <i class="fas fa-phone-alt me-2"></i>
+          Add Call Log
+        </div>
+        <div class="card-body p-4">
+          <a href="{% url 'add_call_log' client.id %}" class="btn btn-primary w-100 btn-add-call">
+            <i class="fas fa-plus-circle me-2"></i>Record New Call
+          </a>
+        </div>
+      </div>
+
+      <!-- Call History -->
+      <div class="card shadow-lg mb-4 modern-card">
+        <div class="card-header table-title-bar fw-bold text-white d-flex align-items-center">
+          <i class="fas fa-history me-2"></i>
+          Call History ({{ call_logs.count }} Calls)
+        </div>
+        <div class="card-body p-4">
+          {% if call_logs %}
+            <div class="call-log-scroll">
+              {% for log in call_logs %}
+                <div class="call-log-item">
+                  <div class="call-log-header">
+                    <span class="call-log-date">
+                      <i class="fas fa-calendar me-1"></i>{{ log.call_date }}
+                    </span>
+                    <span class="call-log-time">
+                      <i class="fas fa-clock me-1"></i>{{ log.call_time }}
+                    </span>
+                  </div>
+                  <div class="call-log-meta">
+                    <span class="badge badge-call-duration">
+                      <i class="fas fa-stopwatch me-1"></i>{{ log.duration|default:"N/A" }}
+                    </span>
+                    <span class="badge badge-call-by">
+                      <i class="fas fa-user me-1"></i>{{ log.called_by_name }} ({{ log.called_by_role|upper }})
+                    </span>>
+                  </div>
+                  <div class="call-log-body">
+                    <strong><i class="fas fa-comment-dots me-1"></i>Notes:</strong>
+                    <p>{{ log.notes }}</p>
+                  </div>
+                  {% if log.next_follow_up %}
+                  <div class="call-log-footer">
+                    <i class="fas fa-bell text-warning me-1"></i>
+                    <strong>Next Follow-up:</strong> {{ log.next_follow_up }}
+                  </div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center text-muted py-4">
+              <i class="fas fa-phone-slash fa-3x mb-3"></i>
+              <p>No call history available yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .modern-input {
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+    color: #000;
+  }
+
+  .modern-input:focus {
+    border-color: #0152a4 !important;
+    background-color: #f8f9ff !important;
+    box-shadow: 0 0 0 0.2rem rgba(1, 82, 164, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  .step-header h5 {
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .title-underline {
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(to right, #0152a4, #28a745);
+    border: none;
+    margin-top: 10px;
+  }
+
+  .btn-nav {
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin: 0 5px;
+  }
+
+  .btn-nav:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  .btn-add-call {
+    padding: 15px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .card-header.table-title-bar {
+    padding: 20px;
+    font-size: 18px;
+    border-bottom: 3px solid rgba(255,255,255,0.2);
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .call-log-scroll {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 10px;
+  }
+
+  .call-log-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .call-log-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #0152a4 0%, #0168cc 100%);
+    border-radius: 10px;
+  }
+
+  .call-log-item {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-left: 5px solid #0152a4;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .call-log-item:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+
+  .call-log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #0152a4;
+    font-size: 14px;
+  }
+
+  .call-log-meta {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .badge-call-duration {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-call-by {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .call-log-body {
+    background: white;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+
+  .call-log-body strong {
+    color: #0152a4;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .call-log-body p {
+    margin: 0;
+    color: #555;
+    line-height: 1.6;
+  }
+
+  .call-log-footer {
+    color: #666;
+    font-size: 13px;
+    background: #fff3cd;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border-left: 3px solid #ffc107;
+  }
+</style>
+{% endblock %}

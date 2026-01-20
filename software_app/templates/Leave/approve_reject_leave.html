@@ -1,0 +1,268 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}Review Leave - {{ leave_app.leave_id }}{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-check-circle me-3 fs-3"></i>
+    <div>
+      <div class="fw-bold fs-3">Review Leave Application</div>
+      <small class="text-muted">{{ leave_app.leave_id }}</small>
+    </div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black">HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Review Leave</span>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <div class="row">
+    <!-- Left Column - Leave Details -->
+    <div class="col-md-7">
+      <div class="card shadow-lg border-0 rounded-3 mb-4">
+        <div class="card-header table-title-bar text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>Leave Application Details
+          </h5>
+        </div>
+
+        <div class="card-body">
+          <!-- Employee Info -->
+          <div class="mb-4">
+            <h6 class="text-primary mb-3">
+              <i class="fas fa-user me-2"></i>Employee Information
+            </h6>
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <strong class="text-muted">Employee ID:</strong>
+                <p class="mb-0">{{ leave_app.employee_id_display }}</p>
+              </div>
+              <div class="col-md-6 mb-2">
+                <strong class="text-muted">Name:</strong>
+                <p class="mb-0">{{ leave_app.employee_name }}</p>
+              </div>
+              <div class="col-md-6 mb-2">
+                <strong class="text-muted">Role:</strong>
+                <p class="mb-0">
+                  <span class="badge bg-info">{{ leave_app.employee_role|upper }}</span>
+                </p>
+              </div>
+              <div class="col-md-6 mb-2">
+                <strong class="text-muted">Applied On:</strong>
+                <p class="mb-0">{{ leave_app.applied_date|date:"d M Y, g:i A" }}</p>
+              </div>
+            </div>
+          </div>
+
+          <hr>
+
+          <!-- Leave Details -->
+          <div class="mb-4">
+            <h6 class="text-success mb-3">
+              <i class="fas fa-calendar-alt me-2"></i>Leave Details
+            </h6>
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <strong class="text-muted">Leave Type:</strong>
+                <p class="mb-0">
+                  {% if leave_app.leave_type == 'casual' %}
+                    <span class="badge bg-success">Casual Leave</span>
+                  {% elif leave_app.leave_type == 'sick' %}
+                    <span class="badge bg-info">Sick Leave</span>
+                  {% elif leave_app.leave_type == 'combined' %}
+                    <span class="badge bg-warning text-dark">Combined Leave</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Unpaid Leave</span>
+                  {% endif %}
+                </p>
+              </div>
+              <div class="col-md-6 mb-2">
+                <strong class="text-muted">Total Days:</strong>
+                <p class="mb-0">
+                  <strong class="text-primary fs-5">{{ leave_app.total_days|floatformat:1 }} days</strong>
+                </p>
+              </div>
+              <div class="col-md-6 mb-2">
+                <strong class="text-muted">From Date:</strong>
+                <p class="mb-0">{{ leave_app.from_date|date:"d M Y (D)" }}</p>
+              </div>
+              <div class="col-md-6 mb-2">
+                <strong class="text-muted">To Date:</strong>
+                <p class="mb-0">{{ leave_app.to_date|date:"d M Y (D)" }}</p>
+              </div>
+            </div>
+
+            <!-- Combined Leave Breakdown -->
+            {% if leave_app.leave_type == 'combined' %}
+            <div class="alert alert-warning mt-3">
+              <strong><i class="fas fa-chart-pie me-2"></i>Combined Leave Breakdown:</strong><br>
+              <div class="row mt-2">
+                <div class="col-6">
+                  <i class="fas fa-calendar-check text-success me-1"></i>
+                  Casual: <strong>{{ leave_app.casual_days_requested|floatformat:1 }} days</strong>
+                </div>
+                <div class="col-6">
+                  <i class="fas fa-notes-medical text-info me-1"></i>
+                  Sick: <strong>{{ leave_app.sick_days_requested|floatformat:1 }} days</strong>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
+          <hr>
+
+          <!-- Reason -->
+          <div class="mb-4">
+            <h6 class="text-warning mb-3">
+              <i class="fas fa-comment-alt me-2"></i>Reason for Leave
+            </h6>
+            <div class="p-3 bg-light rounded">
+              <p class="mb-0" style="white-space: pre-line;">{{ leave_app.reason }}</p>
+            </div>
+          </div>
+
+          <!-- Attachment -->
+          {% if leave_app.attachment %}
+          <div class="mb-3">
+            <h6 class="text-info mb-3">
+              <i class="fas fa-paperclip me-2"></i>Attachment
+            </h6>
+            <a href="{{ leave_app.attachment.url }}" target="_blank" class="btn btn-outline-primary">
+              <i class="fas fa-download me-2"></i>Download Attachment
+            </a>
+          </div>
+          {% endif %}
+
+          <!-- Employee Leave Balance Info -->
+          <div class="alert alert-info">
+            <h6 class="alert-heading">
+              <i class="fas fa-wallet me-2"></i>Employee Current Leave Balance
+            </h6>
+            <div class="row">
+              <div class="col-md-4">
+                <strong>Casual Leave:</strong><br>
+                <span class="fs-5">{{ leave_app.employee.leave_balance.casual_leave_balance|floatformat:1 }} days</span>
+              </div>
+              <div class="col-md-4">
+                <strong>Sick Leave:</strong><br>
+                <span class="fs-5">{{ leave_app.employee.leave_balance.sick_leave_balance|floatformat:1 }} days</span>
+              </div>
+              <div class="col-md-4">
+                <strong>Total Available:</strong><br>
+                <span class="fs-5 text-primary">{{ leave_app.employee.leave_balance.total_leave_balance|floatformat:1 }} days</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Review Form -->
+    <div class="col-md-5">
+      <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-clipboard-check me-2"></i>Review Decision
+          </h5>
+        </div>
+
+        <div class="card-body">
+          <form method="POST" id="reviewForm">
+            {% csrf_token %}
+
+            <!-- HR Remarks -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">
+                <i class="fas fa-comment-dots me-2"></i>HR Remarks / Feedback
+              </label>
+              <textarea name="hr_remarks" class="form-control" rows="6" placeholder="Enter your remarks or feedback for the employee..." required minlength="10"></textarea>
+              <small class="text-muted">
+                <i class="fas fa-info-circle"></i> Minimum 10 characters required
+              </small>
+            </div>
+
+            <!-- Decision Guidelines -->
+            <div class="card mb-4 border-warning">
+              <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">
+                  <i class="fas fa-lightbulb me-2"></i>Approval Guidelines
+                </h6>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0 small">
+                  <li>Check employee's leave balance before approving</li>
+                  <li>Verify the reason is valid and genuine</li>
+                  <li>For sick leave, attachment recommended</li>
+                  <li><strong>Auto-deduction:</strong> Casual → Sick → Unpaid</li>
+                  <li><strong>Attendance:</strong> Auto-marked as 'L' on approval</li>
+                  <li><strong>Early return:</strong> HR can refund unused days later</li>
+                  <li>Provide clear feedback in remarks</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2">
+              <button type="submit" name="action" value="approve" class="btn btn-success btn-lg" onclick="return confirmAction('approve')">
+                <i class="fas fa-check-circle me-2"></i>Approve Leave Application
+              </button>
+              
+              <button type="submit" name="action" value="reject" class="btn btn-danger btn-lg" onclick="return confirmAction('reject')">
+                <i class="fas fa-times-circle me-2"></i>Reject Leave Application
+              </button>
+
+              <a href="{% url 'pending_leave_requests' %}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-arrow-left me-2"></i>Cancel & Go Back
+              </a>
+            </div>
+          </form>
+        </div>
+
+        <!-- Important Notes -->
+        <div class="card-footer bg-light">
+          <small class="text-muted">
+            <strong><i class="fas fa-exclamation-triangle me-1"></i>Note:</strong><br>
+            • This action cannot be undone<br>
+            • Employee will be notified of your decision<br>
+            • Attendance will be auto-created with 'L' status<br>
+            • Leave balance will be deducted automatically
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmAction(action) {
+  const remarks = document.querySelector('textarea[name="hr_remarks"]').value.trim();
+  
+  if (remarks.length < 10) {
+    alert('Please enter at least 10 characters in remarks!');
+    return false;
+  }
+
+  const message = action === 'approve' 
+    ? 'Are you sure you want to APPROVE this leave application?\n\nAttendance will be auto-created and leave balance will be deducted.' 
+    : 'Are you sure you want to REJECT this leave application?\n\nEmployee will be notified of your decision.';
+  
+  return confirm(message);
+}
+</script>
+
+<style>
+.form-control {
+  border: 1.5px solid #444 !important;
+}
+.form-control:focus {
+  border-color: #222 !important;
+  background-color: #f8f8f8 !important;
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salary Slip - {{ salary.salary_id }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .salary-slip {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border: 2px solid #333;
+            padding: 30px;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .company-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .company-address {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .slip-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .info-section {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            padding: 15px;
+            background: #f9f9f9;
+        }
+        
+        .info-left, .info-right {
+            width: 48%;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 14px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .info-value {
+            color: #333;
+        }
+        
+        .salary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .salary-table th {
+            background: #2c3e50;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        
+        .salary-table td {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            font-size: 13px;
+        }
+        
+        .salary-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .amount-col {
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .total-row {
+            background: #e8f5e9 !important;
+            font-weight: bold;
+            font-size: 15px;
+        }
+        
+        .net-row {
+            background: #c8e6c9 !important;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #333;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .signature {
+            text-align: center;
+        }
+        
+        .signature-line {
+            border-top: 2px solid #333;
+            width: 200px;
+            margin-top: 60px;
+            padding-top: 5px;
+            font-size: 13px;
+        }
+        
+        .print-button {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .btn-print {
+            background: #2c3e50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .btn-print:hover {
+            background: #34495e;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .print-button {
+                display: none;
+            }
+            .salary-slip {
+                border: none;
+                padding: 0;
+            }
+        }
+        
+        .attendance-summary {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .attendance-summary table {
+            width: 100%;
+        }
+        
+        .attendance-summary td {
+            padding: 5px;
+            font-size: 13px;
+        }
+        
+        .calculation-breakdown {
+            background: #fff3cd;
+            border: 2px dashed #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .calculation-breakdown h4 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .calc-row {
+            padding: 5px 0;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dotted #ddd;
+        }
+        
+        .calc-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 14px;
+            color: #155724;
+        }
+        
+        .calc-label {
+            color: #555;
+        }
+        
+        .calc-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        /* 🔥 NEW: Status badge styling */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .status-paid {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-unpaid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-training {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="print-button">
+        <button class="btn-print" onclick="window.print()">
+            🖨️ Print Salary Slip
+        </button>
+    </div>
+
+    <div class="salary-slip">
+        <!-- Header -->
+        <div class="header">
+            <div class="company-name">Enegix Web Solutions</div>
+            <div class="company-address">
+                House No.2, Old AG More, Near Bharat Kitchen, Above Saryu Sons Jewellers, Kadru, Delatoli,<br>
+                Ranchi, Jharkhand - 834002 | Phone: +91-9608263050<br>
+                Email: contact@enegixwebsolutions.com | Website: www.enegixwebsolutions.com
+            </div>
+            <div class="slip-title">Salary Slip</div>
+        </div>
+
+        <!-- Employee & Salary Info -->
+        <div class="info-section">
+            <div class="info-left">
+                <div class="info-row">
+                    <span class="info-label">Employee ID:</span>
+                    <span class="info-value">{{ salary.employee_id_display }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Employee Name:</span>
+                    <span class="info-value">{{ salary.employee_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Designation:</span>
+                    <span class="info-value">{{ salary.employee.designation }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Department:</span>
+                    <span class="info-value">{{ salary.employee.role|upper }}</span>
+                </div>
+            </div>
+            <div class="info-right">
+                <div class="info-row">
+                    <span class="info-label">Salary ID:</span>
+                    <span class="info-value">{{ salary.salary_id }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Month/Year:</span>
+                    <span class="info-value">{{ salary.month }}/{{ salary.year }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Payment Date:</span>
+                    <span class="info-value">{{ salary.payment_date|date:"d-M-Y"|default:"Pending" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Generated On:</span>
+                    <span class="info-value">{{ salary.created_at|date:"d-M-Y" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔥 UPDATED: Attendance Summary -->
+        <div class="attendance-summary">
+            <strong>Attendance Summary:</strong>
+            <table>
+                <tr>
+                    <td><strong>Present:</strong> {{ salary.total_present }} days</td>
+                    <td><strong>Absent:</strong> {{ salary.total_absent }} days</td>
+                    <td><strong>Half Day:</strong> {{ salary.total_half_days }} days</td>
+                    <td><strong>Leave:</strong> {{ salary.total_leaves }} days</td>
+                </tr>
+                <!-- 🔥 NEW: Holiday, LWP, Training rows -->
+                <tr>
+                    <td><strong>Holiday:</strong> {{ salary.total_holidays|default:0 }} days</td>
+                    <td><strong>LWP:</strong> {{ salary.total_lwp|default:0 }} days</td>
+                    <td><strong>Training:</strong> {{ salary.total_training|default:0 }} days</td>
+                    <td></td>
+                </tr>
+                <!-- 🔥 NEW: Status badges explanation -->
+                <tr>
+                    <td colspan="4" style="padding-top: 8px; font-size: 12px; color: #666;">
+                        <span class="status-badge status-paid">P/L/H</span> Paid
+                        <span class="status-badge status-unpaid">A/LWP</span> Unpaid
+                        <span class="status-badge status-training">T</span> Training (₹100/day)
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 🔥 UPDATED: Salary Calculation Breakdown -->
+        <div class="calculation-breakdown">
+            <h4>📊 Salary Calculation Breakdown</h4>
+            
+            <div class="calc-row">
+                <span class="calc-label">Base Salary (Monthly):</span>
+                <span class="calc-value">₹{{ salary.base_salary|floatformat:2 }}</span>
+            </div>
+            
+            <!-- 🔥 UPDATED: Dynamic per-day calculation -->
+            <div class="calc-row">
+                <span class="calc-label">Per Day Salary (Base ÷ 
+                    {% if salary.month == 2 %}28
+                    {% elif salary.month in 4|add:6|add:9|add:11 %}30
+                    {% else %}31
+                    {% endif %} days):</span>
+                <span class="calc-value">₹{{ salary.per_day_salary|floatformat:2 }}</span>
+            </div>
+            
+            <div class="calc-row">
+                <span class="calc-label">Present Days Salary ({{ salary.total_present }} × ₹{{ salary.per_day_salary|floatformat:2 }}):</span>
+                <span class="calc-value">₹{% widthratio salary.total_present 1 salary.per_day_salary %}</span>
+            </div>
+            
+            <div class="calc-row">
+                <span class="calc-label">Leave Days Salary ({{ salary.total_leaves }} × ₹{{ salary.per_day_salary|floatformat:2 }}):</span>
+                <span class="calc-value">₹{% widthratio salary.total_leaves 1 salary.per_day_salary %}</span>
+            </div>
+            
+            <!-- 🔥 NEW: Holiday salary calculation -->
+            {% if salary.total_holidays > 0 %}
+            <div class="calc-row">
+                <span class="calc-label">Holiday Days Salary ({{ salary.total_holidays }} × ₹{{ salary.per_day_salary|floatformat:2 }}):</span>
+                <span class="calc-value">₹{% widthratio salary.total_holidays 1 salary.per_day_salary %}</span>
+            </div>
+            {% endif %}
+            
+            <div class="calc-row">
+                <span class="calc-label">Half Days Salary ({{ salary.total_half_days }} × ₹{{ salary.per_day_salary|floatformat:2 }} ÷ 2):</span>
+                <span class="calc-value">₹{% widthratio salary.total_half_days 2 salary.per_day_salary %}</span>
+            </div>
+            
+            <!-- 🔥 NEW: Training salary calculation -->
+            {% if salary.total_training > 0 %}
+            <div class="calc-row">
+                <span class="calc-label">Training Days Salary ({{ salary.total_training }} × ₹100):</span>
+                <span class="calc-value">₹{% widthratio salary.total_training 1 100 %}</span>
+            </div>
+            {% endif %}
+            
+            <!-- 🔥 NEW: LWP explanation (unpaid) -->
+            {% if salary.total_lwp > 0 %}
+            <div class="calc-row" style="color: #721c24;">
+                <span class="calc-label">LWP Days ({{ salary.total_lwp }} days):</span>
+                <span class="calc-value">₹0.00 (Unpaid)</span>
+            </div>
+            {% endif %}
+            
+            {% if salary.bonus > 0 %}
+            <div class="calc-row">
+                <span class="calc-label">Bonus:</span>
+                <span class="calc-value">+ ₹{{ salary.bonus|floatformat:2 }}</span>
+            </div>
+            {% endif %}
+            
+            {% if salary.travel_allowance > 0 %}
+            <div class="calc-row">
+                <span class="calc-label">Travel Allowance:</span>
+                <span class="calc-value">+ ₹{{ salary.travel_allowance|floatformat:2 }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="calc-row">
+                <span class="calc-label">💰 Total Gross Salary:</span>
+                <span class="calc-value">₹{{ salary.gross_salary|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <!-- 🔥 UPDATED: Earnings & Deductions Table -->
+        <table class="salary-table">
+            <thead>
+                <tr>
+                    <th style="width: 50%;">EARNINGS</th>
+                    <th style="width: 20%; text-align: right;">AMOUNT (₹)</th>
+                    <th style="width: 50%;">DEDUCTIONS</th>
+                    <th style="width: 20%; text-align: right;">AMOUNT (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Attendance Based Salary (P+L+HD)</td>
+                    <td class="amount-col">
+                        {% widthratio salary.total_present 1 salary.per_day_salary as present_sal %}
+                        {% widthratio salary.total_leaves 1 salary.per_day_salary as leave_sal %}
+                        {% widthratio salary.total_half_days 2 salary.per_day_salary as half_sal %}
+                        ₹{% widthratio present_sal|add:leave_sal|add:half_sal 1 1 %}
+                    </td>
+                    <td>Provident Fund ({{ salary.pf_percent }}%)</td>
+                    <td class="amount-col">{{ salary.pf_amount|floatformat:2 }}</td>
+                </tr>
+                
+                <!-- 🔥 NEW: Holiday salary row -->
+                {% if salary.total_holidays > 0 %}
+                <tr>
+                    <td>Holiday Salary ({{ salary.total_holidays }} days)</td>
+                    <td class="amount-col">₹{% widthratio salary.total_holidays 1 salary.per_day_salary %}</td>
+                    <td>&nbsp;</td>
+                    <td class="amount-col">&nbsp;</td>
+                </tr>
+                {% endif %}
+                
+                <!-- 🔥 NEW: Training salary row -->
+                {% if salary.total_training > 0 %}
+                <tr>
+                    <td>Training Salary ({{ salary.total_training }} days × ₹100)</td>
+                    <td class="amount-col">₹{% widthratio salary.total_training 1 100 %}</td>
+                    <td>&nbsp;</td>
+                    <td class="amount-col">&nbsp;</td>
+                </tr>
+                {% endif %}
+                
+                <tr>
+                    <td>Bonus</td>
+                    <td class="amount-col">{{ salary.bonus|floatformat:2 }}</td>
+                    <td>ESI ({{ salary.esi_percent }}%)</td>
+                    <td class="amount-col">{{ salary.esi_amount|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Travel Allowance</td>
+                    <td class="amount-col">{{ salary.travel_allowance|floatformat:2 }}</td>
+                    <td>&nbsp;</td>
+                    <td class="amount-col">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td>Previous Balance (Carry Forward)</td>
+                    <td class="amount-col">{{ salary.previous_balance|floatformat:2 }}</td>
+                    <td>&nbsp;</td>
+                    <td class="amount-col">&nbsp;</td>
+                </tr>
+                <tr class="total-row">
+                    <td><strong>GROSS EARNINGS</strong></td>
+                    <td class="amount-col">₹{{ salary.gross_salary|floatformat:2 }}</td>
+                    <td><strong>TOTAL DEDUCTIONS</strong></td>
+                    <td class="amount-col">₹{{ salary.total_deductions|floatformat:2 }}</td>
+                </tr>
+                <tr class="net-row">
+                    <td colspan="3"><strong>NET PAYABLE (Gross - Deductions + Previous Balance)</strong></td>
+                    <td class="amount-col">₹{{ salary.net_payable|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td colspan="3"><strong>PAID AMOUNT</strong></td>
+                    <td class="amount-col">₹{{ salary.paid_amount|floatformat:2 }}</td>
+                </tr>
+                <tr style="background: {% if salary.remaining_balance >= 0 %}#fff3cd{% else %}#f8d7da{% endif %} !important;">
+                    <td colspan="3"><strong>REMAINING BALANCE (Carry Forward to Next Month)</strong></td>
+                    <td class="amount-col" style="color: {% if salary.remaining_balance >= 0 %}green{% else %}red{% endif %};">
+                        ₹{{ salary.remaining_balance|floatformat:2 }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Footer with Signatures -->
+        <div class="footer">
+            <div class="signature">
+                <div class="signature-line">Employee Signature</div>
+            </div>
+            <div class="signature">
+                <div class="signature-line">HR/Admin Signature</div>
+            </div>
+        </div>
+
+        <!-- 🔥 UPDATED: Note -->
+        <div style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-left: 4px solid #2c3e50; font-size: 12px;">
+            <strong>Note:</strong> This is a computer-generated salary slip. No signature is required.
+            <!-- 🔥 UPDATED: Calculation formula with new statuses -->
+            Salary is calculated as: (Present + Leave + Holiday) × Per Day Salary + (Half Day × Per Day ÷ 2) + (Training × ₹100) + Allowances - Deductions.
+            Per Day Salary is calculated as Base Salary ÷ 
+            {% if salary.month == 2 %}28
+            {% elif salary.month in 4|add:6|add:9|add:11 %}30
+            {% else %}31
+            {% endif %} days.
+            <!-- 🔥 NEW: LWP explanation -->
+            Absent and LWP days are unpaid (₹0). Maximum attendance salary capped at Base Salary amount. For any queries, please contact HR Department.
+        </div>
+    </div>
+</body>
+</html>

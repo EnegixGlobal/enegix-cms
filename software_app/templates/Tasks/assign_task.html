@@ -1,0 +1,424 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}Assign Task{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-tasks me-3 fs-2" style="color: #138496;"></i>
+    <div class="fw-bold fs-3">Assign New Task</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black"><a href="{% url 'admin_task_list' %}" class="text-decoration-none text-black">Tasks</a></span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Assign Task</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar fw-bold text-white d-flex align-items-center">
+      <i class="fas fa-clipboard-list me-2"></i>
+      Task Assignment Form
+    </div>
+    <div class="card-body p-4">
+      <form method="POST" enctype="multipart/form-data" id="assignTaskForm">
+        {% csrf_token %}
+
+        <!-- Employee Selection Section -->
+        <div class="step-header mb-4">
+          <h5 class="text-primary"><i class="fas fa-user-tie me-2"></i>Employee Selection</h5>
+          <hr class="title-underline">
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fas fa-briefcase me-2 text-primary"></i>Select Role <span class="text-danger">*</span></label>
+            <select class="form-control modern-input" name="role" id="roleSelect" required>
+              <option value="">-- Select Role --</option>
+              <option value="admin">Admin</option>
+              <option value="hr">HR</option>
+              <option value="sales">Sales</option>
+              <option value="developer">Developer</option>
+              <option value="seos">SEO Specialist</option>
+              <option value="digital_marketing">Digital Marketing</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fas fa-user me-2 text-primary"></i>Select Employee <span class="text-danger">*</span></label>
+            <select class="form-control modern-input" name="employee_id" id="employeeSelect" required>
+              <option value="">-- First select a role --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" id="employeeInfo"></div>
+
+        <!-- Task Details Section -->
+        <div class="step-header mb-4 mt-4">
+          <h5 class="text-primary"><i class="fas fa-file-alt me-2"></i>Task Information</h5>
+          <hr class="title-underline">
+        </div>
+
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label class="form-label"><i class="fas fa-heading me-2 text-primary"></i>Task Title <span class="text-danger">*</span></label>
+            <input type="text" class="form-control modern-input" name="task_title" id="taskTitle" placeholder="Enter short task title" maxlength="200" required>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label class="form-label"><i class="fas fa-align-left me-2 text-primary"></i>Task Description <span class="text-danger">*</span></label>
+            <textarea class="form-control modern-input" name="task_description" id="taskDescription" rows="6" placeholder="Enter detailed task description (minimum 20 characters)" required></textarea>
+            <small class="text-muted">Characters: <span id="charCount">0</span> / 20 minimum</small>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label class="form-label"><i class="fas fa-paperclip me-2 text-primary"></i>Attach Reference File (Optional)</label>
+            <input type="file" class="form-control modern-input" name="task_file" id="taskFile">
+            <small class="text-muted">PDF, DOC, DOCX, XLS, XLSX, ZIP (Max 10MB)</small>
+          </div>
+        </div>
+
+        <!-- Deadline Section -->
+        <div class="step-header mb-4 mt-4">
+          <h5 class="text-primary"><i class="fas fa-calendar-alt me-2"></i>Deadline</h5>
+          <hr class="title-underline">
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fas fa-calendar me-2 text-primary"></i>Due Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control modern-input" name="due_date" id="dueDate" min="{{ today }}" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fas fa-clock me-2 text-primary"></i>Due Time <span class="text-danger">*</span></label>
+            <input type="time" class="form-control modern-input" name="due_time" id="dueTime" value="{{ current_time }}" required>
+          </div>
+        </div>
+
+        <!-- Priority Section -->
+        <div class="step-header mb-4 mt-4">
+          <h5 class="text-primary"><i class="fas fa-flag me-2"></i>Priority Level</h5>
+          <hr class="title-underline">
+        </div>
+
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <div class="priority-selection d-flex flex-wrap gap-3">
+              <label class="priority-card urgent-card">
+                <input type="radio" name="priority" value="urgent" required>
+                <div class="priority-content">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <h6>URGENT</h6>
+                  <small>Critical priority</small>
+                </div>
+              </label>
+
+              <label class="priority-card high-card">
+                <input type="radio" name="priority" value="high">
+                <div class="priority-content">
+                  <i class="fas fa-arrow-up"></i>
+                  <h6>HIGH</h6>
+                  <small>High priority</small>
+                </div>
+              </label>
+
+              <label class="priority-card normal-card">
+                <input type="radio" name="priority" value="normal" checked>
+                <div class="priority-content">
+                  <i class="fas fa-minus"></i>
+                  <h6>NORMAL</h6>
+                  <small>Standard priority</small>
+                </div>
+              </label>
+
+              <label class="priority-card low-card">
+                <input type="radio" name="priority" value="low">
+                <div class="priority-content">
+                  <i class="fas fa-arrow-down"></i>
+                  <h6>LOW</h6>
+                  <small>Low priority</small>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="text-end mt-5 pt-3 border-top">
+          <a href="{% url 'admin_task_list' %}" class="btn btn-secondary btn-nav">
+            <i class="fas fa-times me-2"></i>Cancel
+          </a>
+          <button type="submit" class="btn btn-success btn-nav">
+            <i class="fas fa-paper-plane me-2"></i>Assign Task
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+  // Role selection - fetch employees
+  $('#roleSelect').on('change', function() {
+    const role = $(this).val();
+    
+    if (role) {
+      $.ajax({
+        url: '{% url "get_employees_by_role_ajax" %}',
+        data: { role: role },
+        success: function(response) {
+          if (response.success && response.employees.length > 0) {
+            let options = '<option value="">-- Select Employee --</option>';
+            response.employees.forEach(emp => {
+              options += `<option value="${emp.id}" 
+                data-empid="${emp.employee_id}" 
+                data-designation="${emp.designation}"
+                data-email="${emp.email}">
+                ${emp.employee_id} - ${emp.full_name} (${emp.designation})
+              </option>`;
+            });
+            $('#employeeSelect').html(options);
+          } else {
+            alert('❌ No employees found for this role!');
+            $('#employeeSelect').html('<option value="">-- No employees available --</option>');
+          }
+        },
+        error: function() {
+          alert('❌ Error fetching employees!');
+        }
+      });
+    } else {
+      $('#employeeSelect').html('<option value="">-- First select a role --</option>');
+      $('#employeeInfo').html('');
+    }
+  });
+
+  // Employee selection - show info
+  $('#employeeSelect').on('change', function() {
+    const empId = $(this).val();
+    
+    if (empId) {
+      const selectedOption = $(this).find('option:selected');
+      const empIdDisplay = selectedOption.data('empid');
+      const designation = selectedOption.data('designation');
+      const email = selectedOption.data('email');
+      
+      $('#employeeInfo').html(`
+        <div class="col-md-12 mb-3">
+          <div class="alert alert-info border-0" style="background: linear-gradient(135deg, #e3f5f8 0%, #d1eef4 100%);">
+            <h6 class="mb-2"><i class="fas fa-user-check text-primary"></i> Selected Employee:</h6>
+            <div class="row">
+              <div class="col-md-4">
+                <p class="mb-1"><strong>ID:</strong> ${empIdDisplay}</p>
+              </div>
+              <div class="col-md-4">
+                <p class="mb-1"><strong>Name:</strong> ${selectedOption.text().split(' - ')[1].split(' (')[0]}</p>
+              </div>
+              <div class="col-md-4">
+                <p class="mb-0"><strong>Email:</strong> ${email}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `);
+    } else {
+      $('#employeeInfo').html('');
+    }
+  });
+
+  // Character count for description
+  $('#taskDescription').on('input', function() {
+    const length = $(this).val().length;
+    $('#charCount').text(length);
+    
+    if (length >= 20) {
+      $('#charCount').removeClass('text-danger').addClass('text-success');
+    } else {
+      $('#charCount').removeClass('text-success').addClass('text-danger');
+    }
+  });
+
+  // Form validation
+  $('#assignTaskForm').on('submit', function(e) {
+    const description = $('#taskDescription').val();
+    
+    if (description.length < 20) {
+      e.preventDefault();
+      alert('⚠️ Task description must be at least 20 characters!');
+      $('#taskDescription').focus();
+      return false;
+    }
+
+    const confirmed = confirm('📋 Are you sure you want to assign this task?');
+    if (!confirmed) {
+      e.preventDefault();
+      return false;
+    }
+
+    // Disable submit button to prevent double submission
+    $(this).find('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Assigning...');
+    return true;
+  });
+});
+</script>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .modern-input {
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+    color: #000;
+  }
+
+  .modern-input:focus {
+    border-color: #138496 !important;
+    background-color: #f0f9fa !important;
+    box-shadow: 0 0 0 0.2rem rgba(19, 132, 150, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  .step-header h5 {
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .title-underline {
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(to right, #138496, #28a745);
+    border: none;
+    margin-top: 10px;
+  }
+
+  .btn-nav {
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin: 0 5px;
+  }
+
+  .btn-nav:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  .card-header.table-title-bar {
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    padding: 20px;
+    font-size: 18px;
+    border-bottom: 3px solid rgba(255,255,255,0.2);
+  }
+
+  .priority-selection {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+  }
+
+  .priority-card {
+    flex: 1;
+    min-width: 150px;
+    max-width: 200px;
+    padding: 20px;
+    border: 3px solid #e0e0e0;
+    border-radius: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+  }
+
+  .priority-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+  }
+
+  .priority-card input[type="radio"] {
+    display: none;
+  }
+
+  .priority-card input[type="radio"]:checked + .priority-content {
+    color: white;
+  }
+
+  .priority-card.urgent-card:has(input:checked) {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    border-color: #dc3545;
+    color: white;
+  }
+
+  .priority-card.high-card:has(input:checked) {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    border-color: #ffc107;
+    color: white;
+  }
+
+  .priority-card.normal-card:has(input:checked) {
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    border-color: #138496;
+    color: white;
+  }
+
+  .priority-card.low-card:has(input:checked) {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    border-color: #6c757d;
+    color: white;
+  }
+
+  .priority-content i {
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
+
+  .priority-content h6 {
+    margin: 10px 0 5px;
+    font-weight: 700;
+  }
+
+  .priority-content small {
+    opacity: 0.9;
+  }
+
+  label .text-danger {
+    font-weight: normal;
+  }
+
+  #charCount {
+    font-weight: 600;
+  }
+</style>
+{% endblock %}

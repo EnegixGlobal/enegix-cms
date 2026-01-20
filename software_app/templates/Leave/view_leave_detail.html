@@ -1,0 +1,311 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}Leave Detail - {{ leave_app.leave_id }}{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-file-alt me-3 fs-3"></i>
+    <div>
+      <div class="fw-bold fs-3">Leave Application Details</div>
+      <small class="text-muted">{{ leave_app.leave_id }}</small>
+    </div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black">HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Leave Detail</span>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header table-title-bar text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>Leave Application: {{ leave_app.leave_id }}
+          </h5>
+          <div>
+            {% if request.session.role in 'hr,sales,developer,seos' %}
+            <a href="{% url 'my_leave_applications' %}" class="btn btn-light btn-sm">
+              <i class="fas fa-arrow-left me-2"></i>Back to My Applications
+            </a>
+            {% else %}
+            <a href="{% url 'all_leave_applications' %}" class="btn btn-light btn-sm">
+              <i class="fas fa-arrow-left me-2"></i>Back to All Applications
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Status Badge -->
+          <div class="text-center mb-4">
+            {% if leave_app.status == 'pending' %}
+              <span class="badge bg-warning text-dark fs-5 px-4 py-2">
+                <i class="fas fa-clock me-2"></i>Pending Approval
+              </span>
+            {% elif leave_app.status == 'approved' %}
+              <span class="badge bg-success fs-5 px-4 py-2">
+                <i class="fas fa-check-circle me-2"></i>Approved
+              </span>
+              {% if leave_app.refund_processed %}
+                <br>
+                <span class="badge bg-info mt-2">
+                  <i class="fas fa-undo me-1"></i>Refund Processed
+                </span>
+              {% endif %}
+            {% elif leave_app.status == 'rejected' %}
+              <span class="badge bg-danger fs-5 px-4 py-2">
+                <i class="fas fa-times-circle me-2"></i>Rejected
+              </span>
+            {% endif %}
+          </div>
+
+          <div class="row">
+            <!-- Left Column - Employee Info -->
+            <div class="col-md-6">
+              <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-user me-2"></i>Employee Information
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <table class="table table-borderless mb-0">
+                    <tr>
+                      <td width="40%" class="text-muted"><strong>Employee ID:</strong></td>
+                      <td>{{ leave_app.employee_id_display }}</td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted"><strong>Name:</strong></td>
+                      <td>{{ leave_app.employee_name }}</td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted"><strong>Role:</strong></td>
+                      <td>
+                        <span class="badge bg-info">{{ leave_app.employee_role|upper }}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted"><strong>Applied On:</strong></td>
+                      <td>{{ leave_app.applied_date|date:"d M Y, g:i A" }}</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column - Leave Details -->
+            <div class="col-md-6">
+              <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-success text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>Leave Details
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <table class="table table-borderless mb-0">
+                    <tr>
+                      <td width="40%" class="text-muted"><strong>Leave Type:</strong></td>
+                      <td>
+                        {% if leave_app.leave_type == 'casual' %}
+                          <span class="badge bg-success">Casual Leave</span>
+                        {% elif leave_app.leave_type == 'sick' %}
+                          <span class="badge bg-info">Sick Leave</span>
+                        {% elif leave_app.leave_type == 'combined' %}
+                          <span class="badge bg-warning text-dark">Combined Leave</span>
+                        {% else %}
+                          <span class="badge bg-secondary">Unpaid Leave</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted"><strong>From Date:</strong></td>
+                      <td>{{ leave_app.from_date|date:"d M Y" }}</td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted"><strong>To Date:</strong></td>
+                      <td>{{ leave_app.to_date|date:"d M Y" }}</td>
+                    </tr>
+                    <tr>
+                      <td class="text-muted"><strong>Total Days:</strong></td>
+                      <td><strong class="text-primary fs-5">{{ leave_app.total_days|floatformat:1 }} days</strong></td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Combined Leave Breakdown (if applicable) -->
+          {% if leave_app.leave_type == 'combined' %}
+          <div class="card mb-4 shadow-sm border-warning">
+            <div class="card-header bg-warning text-dark">
+              <h6 class="mb-0">
+                <i class="fas fa-chart-pie me-2"></i>Combined Leave Distribution
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row text-center">
+                <div class="col-md-6">
+                  <div class="p-3 bg-success bg-opacity-10 rounded">
+                    <h4 class="mb-0 text-success">{{ leave_app.casual_days_requested|floatformat:1 }}</h4>
+                    <small class="text-muted">Casual Days Requested</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="p-3 bg-info bg-opacity-10 rounded">
+                    <h4 class="mb-0 text-info">{{ leave_app.sick_days_requested|floatformat:1 }}</h4>
+                    <small class="text-muted">Sick Days Requested</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Deduction Info (if approved) -->
+          {% if leave_app.status == 'approved' %}
+          <div class="card mb-4 shadow-sm border-success">
+            <div class="card-header bg-success text-white">
+              <h6 class="mb-0">
+                <i class="fas fa-minus-circle me-2"></i>Leave Deduction Summary
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row text-center">
+                <div class="col-md-4">
+                  <div class="p-3 bg-success bg-opacity-10 rounded">
+                    <h4 class="mb-0 text-success">{{ leave_app.casual_days_deducted|floatformat:1 }}</h4>
+                    <small class="text-muted">Casual Days Deducted</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="p-3 bg-info bg-opacity-10 rounded">
+                    <h4 class="mb-0 text-info">{{ leave_app.sick_days_deducted|floatformat:1 }}</h4>
+                    <small class="text-muted">Sick Days Deducted</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="p-3 bg-primary bg-opacity-10 rounded">
+                    <h4 class="mb-0 text-primary">{{ leave_app.casual_days_deducted|add:leave_app.sick_days_deducted|floatformat:1 }}</h4>
+                    <small class="text-muted">Total Deducted</small>
+                  </div>
+                </div>
+              </div>
+              
+              {% if leave_app.refund_processed %}
+              <div class="alert alert-info mt-3 mb-0">
+                <i class="fas fa-undo me-2"></i>
+                <strong>Refund Processed:</strong> Employee returned early. Days actually taken: <strong>{{ leave_app.days_actually_taken|floatformat:1 }}</strong>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Reason Section -->
+          <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-warning text-dark">
+              <h6 class="mb-0">
+                <i class="fas fa-comment-alt me-2"></i>Reason for Leave
+              </h6>
+            </div>
+            <div class="card-body">
+              <p class="mb-0" style="white-space: pre-line;">{{ leave_app.reason }}</p>
+            </div>
+          </div>
+
+          <!-- Attachment -->
+          {% if leave_app.attachment %}
+          <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-info text-white">
+              <h6 class="mb-0">
+                <i class="fas fa-paperclip me-2"></i>Attachment
+              </h6>
+            </div>
+            <div class="card-body">
+              <a href="{{ leave_app.attachment.url }}" target="_blank" class="btn btn-outline-primary">
+                <i class="fas fa-download me-2"></i>Download Attachment
+              </a>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- HR Approval Section (if reviewed) -->
+          {% if leave_app.status != 'pending' %}
+          <div class="card shadow-sm {% if leave_app.status == 'approved' %}border-success{% else %}border-danger{% endif %}">
+            <div class="card-header {% if leave_app.status == 'approved' %}bg-success{% else %}bg-danger{% endif %} text-white">
+              <h6 class="mb-0">
+                <i class="fas fa-user-tie me-2"></i>HR Response
+              </h6>
+            </div>
+            <div class="card-body">
+              <table class="table table-borderless mb-0">
+                <tr>
+                  <td width="30%" class="text-muted"><strong>Reviewed By:</strong></td>
+                  <td>{{ leave_app.approved_by_name }} ({{ leave_app.approved_by_role|upper }})</td>
+                </tr>
+                <tr>
+                  <td class="text-muted"><strong>Review Date:</strong></td>
+                  <td>{{ leave_app.approval_date|date:"d M Y, g:i A" }}</td>
+                </tr>
+                <tr>
+                  <td class="text-muted"><strong>Status:</strong></td>
+                  <td>
+                    {% if leave_app.status == 'approved' %}
+                      <span class="badge bg-success">APPROVED</span>
+                    {% else %}
+                      <span class="badge bg-danger">REJECTED</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% if leave_app.hr_remarks %}
+                <tr>
+                  <td class="text-muted align-top"><strong>HR Remarks:</strong></td>
+                  <td>
+                    <div class="alert alert-light mb-0">
+                      <p class="mb-0" style="white-space: pre-line;">{{ leave_app.hr_remarks }}</p>
+                    </div>
+                  </td>
+                </tr>
+                {% endif %}
+              </table>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Action Buttons -->
+          <div class="mt-4 d-flex justify-content-between">
+            <div>
+              {% if request.session.role in 'hr,sales,developer,seos' %}
+                <a href="{% url 'my_leave_applications' %}" class="btn btn-secondary">
+                  <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
+              {% else %}
+                <a href="{% url 'all_leave_applications' %}" class="btn btn-secondary">
+                  <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
+              {% endif %}
+            </div>
+            
+            <div>
+              {% if leave_app.status == 'pending' %}
+                {% if request.session.role == 'hr' or request.session.role == 'admin' or request.session.role == 'super_admin' %}
+                  <a href="{% url 'approve_reject_leave' leave_app.id %}" class="btn btn-primary">
+                    <i class="fas fa-check-circle me-2"></i>Review Application
+                  </a>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

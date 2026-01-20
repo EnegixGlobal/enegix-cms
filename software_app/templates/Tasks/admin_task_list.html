@@ -1,0 +1,505 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}All Tasks{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-tasks me-3 fs-2" style="color: #138496;"></i>
+    <div class="fw-bold fs-3">Task Management</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Task List</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="stat-card stat-card-primary">
+        <div class="stat-icon">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ total_tasks }}</h3>
+          <p>Total Tasks</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card stat-card-warning">
+        <div class="stat-icon">
+          <i class="fas fa-hourglass-half"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ pending_tasks }}</h3>
+          <p>Pending</p>
+          <small>Not accepted yet</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card stat-card-info">
+        <div class="stat-icon">
+          <i class="fas fa-spinner"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ accepted_tasks }}</h3>
+          <p>In Progress</p>
+          <small>Currently working</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card stat-card-success">
+        <div class="stat-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ completed_tasks }}</h3>
+          <p>Completed</p>
+          <small>Finished tasks</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-body p-4">
+      <form method="GET" class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label"><i class="fas fa-signal me-2 text-primary"></i>Status</label>
+          <select name="status" class="form-control modern-input">
+            <option value="">All Status</option>
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="accepted" {% if status_filter == 'accepted' %}selected{% endif %}>Accepted</option>
+            <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label"><i class="fas fa-user me-2 text-primary"></i>Employee</label>
+          <select name="employee" class="form-control modern-input">
+            <option value="">All Employees</option>
+            {% for emp in employees %}
+            <option value="{{ emp.id }}" {% if employee_filter == emp.id|stringformat:"s" %}selected{% endif %}>
+              {{ emp.employee_id }} - {{ emp.full_name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label"><i class="fas fa-flag me-2 text-primary"></i>Priority</label>
+          <select name="priority" class="form-control modern-input">
+            <option value="">All Priorities</option>
+            <option value="urgent" {% if priority_filter == 'urgent' %}selected{% endif %}>Urgent</option>
+            <option value="high" {% if priority_filter == 'high' %}selected{% endif %}>High</option>
+            <option value="normal" {% if priority_filter == 'normal' %}selected{% endif %}>Normal</option>
+            <option value="low" {% if priority_filter == 'low' %}selected{% endif %}>Low</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">&nbsp;</label>
+          <button type="submit" class="btn btn-primary w-100 btn-filter">
+            <i class="fas fa-filter me-2"></i>Apply Filter
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tasks Table -->
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar d-flex justify-content-between align-items-center">
+      <span class="fw-bold text-white"><i class="fas fa-list-ul me-2"></i>All Assigned Tasks</span>
+      <a href="{% url 'assign_task' %}" class="btn btn-light btn-add-new">
+        <i class="fas fa-plus me-2"></i>Assign New Task
+      </a>
+    </div>
+    <div class="card-body p-4">
+      {% if tasks %}
+      <div class="table-responsive">
+        <table class="table table-hover modern-table" id="taskTable">
+          <thead>
+            <tr>
+              <th><i class="fas fa-hashtag me-2"></i>Task ID</th>
+              <th><i class="fas fa-heading me-2"></i>Title</th>
+              <th><i class="fas fa-user me-2"></i>Assigned To</th>
+              <th><i class="fas fa-flag me-2"></i>Priority</th>
+              <th><i class="fas fa-calendar me-2"></i>Due Date</th>
+              <th><i class="fas fa-signal me-2"></i>Status</th>
+              <th><i class="fas fa-clock me-2"></i>Time Taken</th>
+              <th><i class="fas fa-cogs me-2"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for task in tasks %}
+            <tr class="table-row-hover">
+              <td><strong class="task-id">{{ task.task_id }}</strong></td>
+              <td>
+                <strong>{{ task.task_title|truncatewords:5 }}</strong>
+                {% if task.is_overdue and task.status != 'completed' %}
+                <span class="badge badge-overdue ms-1">OVERDUE</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="employee-info">
+                  <strong>{{ task.assigned_to_id_display }}</strong><br>
+                  <span class="text-muted">{{ task.assigned_to_name }}</span><br>
+                  <small class="text-primary">{{ task.assigned_to_role|upper }}</small>
+                </div>
+              </td>
+              <td>
+                {% if task.priority == 'urgent' %}
+                <span class="badge modern-badge badge-urgent">
+                  <i class="fas fa-exclamation-triangle me-1"></i>URGENT
+                </span>
+                {% elif task.priority == 'high' %}
+                <span class="badge modern-badge badge-high">
+                  <i class="fas fa-arrow-up me-1"></i>HIGH
+                </span>
+                {% elif task.priority == 'normal' %}
+                <span class="badge modern-badge badge-normal">
+                  <i class="fas fa-minus me-1"></i>NORMAL
+                </span>
+                {% else %}
+                <span class="badge modern-badge badge-low">
+                  <i class="fas fa-arrow-down me-1"></i>LOW
+                </span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="date-display">{{ task.due_date|date:"d M Y" }}</span><br>
+                <small class="time-display">{{ task.due_time|time:"h:i A" }}</small>
+              </td>
+              <td>
+                {% if task.status == 'pending' %}
+                <span class="badge modern-badge badge-pending">
+                  <i class="fas fa-hourglass-half me-1"></i>Pending
+                </span>
+                {% elif task.status == 'accepted' %}
+                <span class="badge modern-badge badge-accepted">
+                  <i class="fas fa-spinner me-1"></i>In Progress
+                </span>
+                {% elif task.status == 'completed' %}
+                <span class="badge modern-badge badge-completed">
+                  <i class="fas fa-check-circle me-1"></i>Completed
+                </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if task.status == 'completed' %}
+                <strong class="time-taken">{{ task.time_taken_minutes }} min</strong><br>
+                <small class="text-muted">({% widthratio task.time_taken_minutes 60 1 %}h)</small>
+                {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <a href="{% url 'admin_view_task_detail' task.id %}" class="btn btn-action btn-info" title="View Details">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  {% if task.status == 'pending' %}
+                  <button class="btn btn-action btn-danger" onclick="confirmDelete({{ task.id }})" title="Delete">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+        <h5>No tasks found!</h5>
+        <p class="text-muted">Start by assigning a new task.</p>
+        <a href="{% url 'assign_task' %}" class="btn btn-primary mt-3">
+          <i class="fas fa-plus me-2"></i>Assign First Task
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDelete(taskId) {
+  if (confirm("⚠️ Are you sure you want to delete this task?")) {
+    window.location.href = `/delete-task/${taskId}/`;
+  }
+}
+</script>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  /* Statistics Cards */
+  .stat-card {
+    border-radius: 15px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    border: none;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+  }
+
+  .stat-card-primary {
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .stat-card-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    color: white;
+  }
+
+  .stat-card-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .stat-card-success {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+  }
+
+  .stat-icon {
+    font-size: 48px;
+    opacity: 0.9;
+  }
+
+  .stat-content h3 {
+    margin: 0;
+    font-size: 36px;
+    font-weight: 700;
+  }
+
+  .stat-content p {
+    margin: 5px 0 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .stat-content small {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+
+  /* Form Inputs */
+  .modern-input {
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+    color: #000;
+  }
+
+  .modern-input:focus {
+    border-color: #138496 !important;
+    background-color: #f0f9fa !important;
+    box-shadow: 0 0 0 0.2rem rgba(19, 132, 150, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  .btn-filter {
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  /* Table */
+  .card-header.table-title-bar {
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    padding: 20px;
+    font-size: 18px;
+    border-bottom: 3px solid rgba(255,255,255,0.2);
+  }
+
+  .btn-add-new {
+    padding: 10px 25px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: white;
+    color: #138496;
+    border: 2px solid white;
+  }
+
+  .btn-add-new:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255,255,255,0.3);
+    background: #f8f9fa;
+  }
+
+  .modern-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .modern-table thead tr {
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .modern-table thead th {
+    padding: 15px;
+    font-weight: 600;
+    border: none;
+    vertical-align: middle;
+  }
+
+  .modern-table tbody td {
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .table-row-hover {
+    transition: all 0.3s ease;
+  }
+
+  .table-row-hover:hover {
+    background: linear-gradient(135deg, #f0f9fa 0%, #e9ecef 100%);
+    transform: scale(1.01);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  }
+
+  .task-id {
+    color: #138496;
+    font-size: 14px;
+  }
+
+  .employee-info {
+    line-height: 1.4;
+  }
+
+  .date-display {
+    font-weight: 600;
+    color: #333;
+  }
+
+  .time-display {
+    color: #6c757d;
+  }
+
+  .time-taken {
+    color: #28a745;
+    font-size: 16px;
+  }
+
+  /* Badges */
+  .modern-badge {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s ease;
+  }
+
+  .badge-urgent {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    color: white;
+  }
+
+  .badge-high {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    color: #333;
+  }
+
+  .badge-normal {
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .badge-low {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    color: white;
+  }
+
+  .badge-pending {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    color: white;
+  }
+
+  .badge-accepted {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .badge-completed {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+  }
+
+  .badge-overdue {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    color: white;
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  /* Action Buttons */
+  .action-buttons {
+    display: flex;
+    gap: 5px;
+  }
+
+  .btn-action {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.3s ease;
+  }
+
+  .btn-action:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+</style>
+{% endblock %}
+

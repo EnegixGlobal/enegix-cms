@@ -1,0 +1,309 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}Assign Project to Employee{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-user-plus me-3 fs-2" style="color: #0152a4;"></i>
+    <div class="fw-bold fs-3">Assign Project to Employee</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Assign Project</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar fw-bold text-white d-flex align-items-center">
+      <i class="fas fa-tasks me-2"></i>
+      Project Assignment
+    </div>
+    <div class="card-body p-4">
+      <form method="POST" action="{% url 'assign_project' %}" id="assignForm">
+        {% csrf_token %}
+        
+        <!-- Project Selection -->
+        <div class="step-header mb-4">
+          <h5 class="text-primary"><i class="fas fa-project-diagram me-2"></i>Project Selection</h5>
+          <hr class="title-underline">
+        </div>
+        
+        <div class="row">
+          <!-- Select Project -->
+          <div class="col-md-12 mb-3">
+            <label class="form-label"><i class="fas fa-folder-open me-2 text-primary"></i>Select Project <span class="text-danger">*</span></label>
+            <select class="form-control modern-input required-field" id="project_id" name="project_id" required>
+              <option value="">-- Select Project --</option>
+              {% for project in projects %}
+              <option value="{{ project.id }}" data-type="{{ project.project_type }}">
+                {{ project.project_id }} - {{ project.project_name }} ({{ project.get_project_type_display }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Select Employee -->
+          <div class="col-md-12 mb-3">
+            <label class="form-label"><i class="fas fa-user-tie me-2 text-primary"></i>Select Employee <span class="text-danger">*</span></label>
+            <select class="form-control modern-input required-field" id="employee_id" name="employee_id" required disabled>
+              <option value="">-- First select a project --</option>
+            </select>
+            <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Employees will be filtered based on project type</small>
+          </div>
+        </div>
+
+        <!-- Employee Details (shown after selection) -->
+        <div id="employeeDetails" class="row mb-3" style="display:none;">
+          <div class="col-12">
+            <div class="alert alert-info modern-alert">
+              <h6><i class="fas fa-user-circle me-2"></i>Selected Employee Details:</h6>
+              <p class="mb-0">
+                <strong>ID:</strong> <span id="emp_id"></span> | 
+                <strong>Name:</strong> <span id="emp_name"></span> | 
+                <strong>Role:</strong> <span id="emp_role"></span> | 
+                <strong>Designation:</strong> <span id="emp_designation"></span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assignment Notes -->
+        <div class="step-header mb-4">
+          <h5 class="text-primary"><i class="fas fa-sticky-note me-2"></i>Additional Information</h5>
+          <hr class="title-underline">
+        </div>
+        
+        <div class="row">
+          <!-- Notes -->
+          <div class="col-md-12 mb-3">
+            <label class="form-label"><i class="fas fa-comment-alt me-2 text-primary"></i>Assignment Notes (Optional)</label>
+            <textarea class="form-control modern-input" id="notes" name="notes" rows="4" placeholder="Add any specific instructions or notes for this assignment"></textarea>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="d-flex justify-content-between mt-5 pt-3 border-top">
+          <a href="{% url 'project_list' %}" class="btn btn-secondary btn-nav">
+            <i class="fas fa-arrow-left me-2"></i>Cancel
+          </a>
+          <button type="submit" class="btn btn-success btn-nav" id="submitBtn">
+            <i class="fas fa-check-circle me-2"></i>Assign Project
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .modern-input {
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+    color: #000;
+  }
+
+  .modern-input:focus {
+    border-color: #0152a4 !important;
+    background-color: #f8f9ff !important;
+    box-shadow: 0 0 0 0.2rem rgba(1, 82, 164, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .modern-input:disabled {
+    background-color: #f5f5f5 !important;
+    cursor: not-allowed;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  .step-header h5 {
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .title-underline {
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(to right, #0152a4, #28a745);
+    border: none;
+    margin-top: 10px;
+  }
+
+  .btn-nav {
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin: 0 5px;
+  }
+
+  .btn-nav:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  .card-header.table-title-bar {
+    padding: 20px;
+    font-size: 18px;
+    border-bottom: 3px solid rgba(255,255,255,0.2);
+  }
+
+  label .text-danger {
+    font-weight: normal;
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .modern-alert {
+    border-radius: 10px;
+    border-left: 5px solid #17a2b8;
+    background: linear-gradient(135deg, #e9f7ff 0%, #e1f5fe 100%);
+  }
+
+  .alert-info {
+    animation: fadeIn 0.3s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, initializing...');
+    
+    const projectSelect = document.getElementById('project_id');
+    const employeeSelect = document.getElementById('employee_id');
+    const employeeDetails = document.getElementById('employeeDetails');
+    const assignForm = document.getElementById('assignForm');
+    
+    // Project selection change
+    projectSelect.addEventListener('change', function() {
+        const projectId = this.value;
+        const projectType = this.options[this.selectedIndex].getAttribute('data-type');
+        
+        console.log('Project selected:', projectId, 'Type:', projectType);
+        
+        // Reset employee dropdown
+        employeeSelect.innerHTML = '<option value="">Loading...</option>';
+        employeeSelect.disabled = false;
+        employeeDetails.style.display = 'none';
+        
+        if (!projectId) {
+            employeeSelect.innerHTML = '<option value="">-- First select a project --</option>';
+            employeeSelect.disabled = true;
+            return;
+        }
+        
+        // Fetch employees via AJAX
+        const url = '{% url "get_employees_by_role" %}?project_type=' + encodeURIComponent(projectType);
+        console.log('Fetching employees from:', url);
+        
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Employees received:', data);
+            
+            employeeSelect.innerHTML = '<option value="">-- Select Employee --</option>';
+            
+            if (data.employees && data.employees.length > 0) {
+                data.employees.forEach(function(emp) {
+                    const option = document.createElement('option');
+                    option.value = emp.id;
+                    option.setAttribute('data-emp-id', emp.employee_id);
+                    option.setAttribute('data-name', emp.full_name);
+                    option.setAttribute('data-role', emp.role);
+                    option.setAttribute('data-designation', emp.designation);
+                    option.textContent = emp.employee_id + ' - ' + emp.full_name + ' (' + emp.designation + ')';
+                    employeeSelect.appendChild(option);
+                });
+                console.log('Added', data.employees.length, 'employees to dropdown');
+            } else {
+                employeeSelect.innerHTML = '<option value="">No employees found for this project type</option>';
+                console.log('No employees found');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching employees:', error);
+            employeeSelect.innerHTML = '<option value="">Error loading employees</option>';
+            alert('Error loading employees. Please check console and try again.');
+        });
+    });
+    
+    // Employee selection change
+    employeeSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        
+        if (this.value) {
+            document.getElementById('emp_id').textContent = selectedOption.getAttribute('data-emp-id');
+            document.getElementById('emp_name').textContent = selectedOption.getAttribute('data-name');
+            document.getElementById('emp_role').textContent = selectedOption.getAttribute('data-role');
+            document.getElementById('emp_designation').textContent = selectedOption.getAttribute('data-designation');
+            employeeDetails.style.display = 'block';
+        } else {
+            employeeDetails.style.display = 'none';
+        }
+    });
+    
+    // Form submission
+    assignForm.addEventListener('submit', function(e) {
+        const projectId = projectSelect.value;
+        const employeeId = employeeSelect.value;
+        
+        if (!projectId || !employeeId) {
+            e.preventDefault();
+            alert('Please select both project and employee!');
+            return false;
+        }
+        
+        console.log('Form submitting with:', {projectId, employeeId});
+    });
+});
+</script>
+{% endblock %}

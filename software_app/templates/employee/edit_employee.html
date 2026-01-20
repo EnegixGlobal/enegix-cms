@@ -1,0 +1,832 @@
+{% extends "base2.html" %}
+{% load static %}
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-user-edit me-3 fs-2" style="color: #0152a4;"></i>
+    <div class="fw-bold fs-3">Edit Employee</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Edit Employee</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <!-- Enhanced Step Progress Bar -->
+  <div class="step-progressbar mb-5 d-flex align-items-center justify-content-center">
+    <div class="text-center step-container">
+      <div class="step active" id="step-bubble-1">
+        <i class="fas fa-user"></i>
+      </div>
+      <div class="step-label mt-2">Basic Info</div>
+    </div>
+    <div class="progress-line" id="line-1"></div>
+    <div class="text-center step-container">
+      <div class="step" id="step-bubble-2">
+        <i class="fas fa-map-marker-alt"></i>
+      </div>
+      <div class="step-label mt-2">Address</div>
+    </div>
+    <div class="progress-line" id="line-2"></div>
+    <div class="text-center step-container">
+      <div class="step" id="step-bubble-3">
+        <i class="fas fa-phone-alt"></i>
+      </div>
+      <div class="step-label mt-2">Emergency Contact</div>
+    </div>
+    <div class="progress-line" id="line-3"></div>
+    <div class="text-center step-container">
+      <div class="step" id="step-bubble-4">
+        <i class="fas fa-briefcase"></i>
+      </div>
+      <div class="step-label mt-2">Professional Details</div>
+    </div>
+    <div class="progress-line" id="line-4"></div>
+    <div class="text-center step-container">
+      <div class="step" id="step-bubble-5">
+        <i class="fas fa-university"></i>
+      </div>
+      <div class="step-label mt-2">Bank Details</div>
+    </div>
+  </div>
+
+  <!-- Form Start -->
+  <form method="POST" enctype="multipart/form-data" id="employeeForm">
+    {% csrf_token %}
+    <div class="card shadow-lg mb-4 modern-card">
+      <div class="card-header table-title-bar fw-bold text-white d-flex align-items-center">
+        <i class="fas fa-clipboard-list me-2"></i>
+        Step <span id="stepNumber">1</span> of 5
+      </div>
+      <div class="card-body p-4">
+        
+        <!-- Step 1 - Basic Info -->
+        <div class="form-step" id="step-1">
+          <div class="step-header mb-4">
+            <h5 class="text-primary"><i class="fas fa-id-badge me-2"></i>Employee Information</h5>
+            <hr class="title-underline">
+          </div>
+          
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-id-card me-2 text-primary"></i>Employee ID <span class="text-danger">*</span></label>
+              <input type="text" name="employee_id" class="form-control modern-input required-field" value="{{ emp.employee_id }}" readonly />
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-user me-2 text-primary"></i>Full Name <span class="text-danger">*</span></label>
+              <input type="text" name="full_name" class="form-control modern-input required-field" value="{{ emp.full_name }}" />
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-envelope me-2 text-primary"></i>Email <span class="text-danger">*</span></label>
+              <input type="email" name="email" class="form-control modern-input required-field" value="{{ emp.email }}" id="emailInput" />
+              <small id="emailFeedback" class="text-danger"></small>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-mobile-alt me-2 text-primary"></i>Mobile Number <span class="text-danger">*</span></label>
+              <input type="tel" name="mobile" class="form-control modern-input required-field" value="{{ emp.mobile }}" maxlength="10" />
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-birthday-cake me-2 text-primary"></i>Date of Birth <span class="text-danger">*</span></label>
+              <input type="date" name="dob" class="form-control modern-input required-field" value="{{ emp.dob|date:'Y-m-d' }}" />
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-venus-mars me-2 text-primary"></i>Gender <span class="text-danger">*</span></label>
+              <select name="gender" class="form-control modern-input required-field">
+                <option value="">-- Select Gender --</option>
+                <option value="male" {% if emp.gender == 'male' %}selected{% endif %}>Male</option>
+                <option value="female" {% if emp.gender == 'female' %}selected{% endif %}>Female</option>
+                <option value="other" {% if emp.gender == 'other' %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-camera me-2 text-primary"></i>Profile Picture</label>
+              <input type="file" name="profile_pic" class="form-control modern-input" accept="image/*" />
+              {% if emp.profile_pic %}
+                <small class="text-muted">Current: <a href="{{ emp.profile_pic.url }}" target="_blank">View</a></small>
+              {% endif %}
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-user-tag me-2 text-primary"></i>Username <span class="text-danger">*</span></label>
+              <input type="text" name="username" class="form-control modern-input required-field" value="{{ emp.username }}" id="usernameInput" />
+              <small id="usernameFeedback" class="text-danger"></small>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-key me-2 text-primary"></i>Password</label>
+              <input type="password" name="password" class="form-control modern-input" placeholder="Leave blank to keep current password" />
+              <small class="text-muted">Leave blank to keep current password</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2 - Address Details -->
+        <div class="form-step d-none" id="step-2">
+          <div class="step-header mb-4">
+            <h5 class="text-primary"><i class="fas fa-home me-2"></i>Address Information</h5>
+            <hr class="title-underline">
+          </div>
+          
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              <label class="form-label"><i class="fas fa-map-marked-alt me-2 text-primary"></i>Address Line <span class="text-danger">*</span></label>
+              <textarea name="address_line" class="form-control modern-input required-field" rows="3">{{ emp.address_line }}</textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-city me-2 text-primary"></i>City <span class="text-danger">*</span></label>
+              <input type="text" name="city" class="form-control modern-input required-field" value="{{ emp.city }}" />
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-flag me-2 text-primary"></i>State <span class="text-danger">*</span></label>
+              <input type="text" name="state" class="form-control modern-input required-field" value="{{ emp.state }}" />
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-mail-bulk me-2 text-primary"></i>Pincode <span class="text-danger">*</span></label>
+              <input type="text" name="pincode" class="form-control modern-input required-field" value="{{ emp.pincode }}" maxlength="6" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 - Emergency Contact -->
+        <div class="form-step d-none" id="step-3">
+          <div class="step-header mb-4">
+            <h5 class="text-primary"><i class="fas fa-exclamation-triangle me-2"></i>Emergency Contact Details</h5>
+            <hr class="title-underline">
+          </div>
+          
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-user-shield me-2 text-primary"></i>Emergency Contact Name <span class="text-danger">*</span></label>
+              <input type="text" name="emergency_contact_name" class="form-control modern-input required-field" value="{{ emp.emergency_contact_name }}" />
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-phone-square me-2 text-primary"></i>Emergency Contact Number <span class="text-danger">*</span></label>
+              <input type="tel" name="emergency_contact_number" class="form-control modern-input required-field" value="{{ emp.emergency_contact_number }}" maxlength="10" />
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label"><i class="fas fa-users me-2 text-primary"></i>Relation <span class="text-danger">*</span></label>
+              <input type="text" name="emergency_contact_relation" class="form-control modern-input required-field" value="{{ emp.emergency_contact_relation }}" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 - Professional Details -->
+        <div class="form-step d-none" id="step-4">
+          <div class="step-header mb-4">
+            <h5 class="text-primary"><i class="fas fa-building me-2"></i>Professional Information</h5>
+            <hr class="title-underline">
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label"><i class="fas fa-user-tie me-2 text-primary"></i>Role <span class="text-danger">*</span></label>
+              <select name="role" class="form-control modern-input required-field">
+                <option value="">-- Select Role --</option>
+                <option value="hr" {% if emp.role == 'hr' %}selected{% endif %}>HR</option>
+                <option value="sales" {% if emp.role == 'sales' %}selected{% endif %}>Sales</option>
+                <option value="developer" {% if emp.role == 'developer' %}selected{% endif %}>Developer</option>
+                <option value="seos" {% if emp.role == 'seos' %}selected{% endif %}>SEO Specialist</option>
+                <option value="digital_marketing" {% if emp.role == 'digital_marketing' %}selected{% endif %}>Digital Marketing</option>
+                <option value="admin" {% if emp.role == 'admin' %}selected{% endif %}>Admin</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label"><i class="fas fa-award me-2 text-primary"></i>Designation <span class="text-danger">*</span></label>
+              <input type="text" name="designation" class="form-control modern-input required-field" value="{{ emp.designation }}" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label"><i class="fas fa-money-bill-wave me-2 text-primary"></i>Base Salary <span class="text-danger">*</span></label>
+              <input type="number" name="base_salary" class="form-control modern-input required-field" value="{{ emp.base_salary }}" min="0" step="1000" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label"><i class="fas fa-file-alt me-2 text-primary"></i>Resume</label>
+              <input type="file" name="resume" class="form-control modern-input" accept=".pdf,.doc,.docx" />
+              {% if emp.resume %}
+                <small class="text-muted">Current: <a href="{{ emp.resume.url }}" target="_blank">View</a></small>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- NEW: Date of Joining Field -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label"><i class="fas fa-calendar-check me-2 text-primary"></i>Date of Joining <span class="text-danger">*</span></label>
+              <input type="date" name="joining_date" class="form-control modern-input required-field" value="{{ emp.training_start_date|date:'Y-m-d' }}" />
+              <small class="form-text text-muted"><i class="fas fa-info-circle me-1"></i>This date will be used to determine the training period (7 days)</small>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label"><i class="fas fa-info-circle me-2 text-primary"></i>Training Status</label>
+              <div class="form-control modern-input bg-light">
+                {% if emp.is_in_training %}
+                  <i class="fas fa-graduation-cap me-2 text-warning"></i>
+                  <span>In Training</span>
+                {% else %}
+                  <i class="fas fa-check-circle me-2 text-success"></i>
+                  <span>Training Completed</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+          <div class="step-header mb-4">
+            <h5 class="text-primary"><i class="fas fa-folder-open me-2"></i>Existing Documents</h5>
+            <hr class="title-underline">
+          </div>
+          
+          <div class="table-responsive mb-4">
+            <table class="table table-hover">
+              <thead class="table-primary">
+                <tr>
+                  <th>Document Name</th>
+                  <th>File</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for doc in documents %}
+                <tr>
+                  <td>{{ doc.document_name }}</td>
+                  <td><a href="{{ doc.document_file.url }}" target="_blank" class="btn btn-sm btn-info"><i class="fas fa-eye me-1"></i>View</a></td>
+                  <td>
+                    <a href="{% url 'delete_employee_document' doc.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this document?')">
+                      <i class="fas fa-trash me-1"></i>Delete
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="3" class="text-center">No documents uploaded</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="step-header mb-4">
+            <h5 class="text-primary"><i class="fas fa-plus-circle me-2"></i>Add New Documents (Optional)</h5>
+            <hr class="title-underline">
+          </div>
+          
+          <div id="documentContainer">
+            <div class="document-row mb-3">
+              <div class="row align-items-end">
+                <div class="col-md-5 mb-3">
+                  <label class="form-label"><i class="fas fa-file-signature me-2 text-primary"></i>Document Name</label>
+                  <input type="text" name="document_name[]" class="form-control modern-input" placeholder="e.g., Aadhar Card, PAN Card" />
+                </div>
+                <div class="col-md-5 mb-3">
+                  <label class="form-label"><i class="fas fa-upload me-2 text-primary"></i>Upload Document</label>
+                  <input type="file" name="documents[]" class="form-control modern-input" accept=".pdf,.jpg,.jpeg,.png" />
+                </div>
+                <div class="col-md-2 mb-3">
+                  <button type="button" class="btn btn-success btn-sm add-document-btn w-100">
+                    <i class="fas fa-plus-circle me-1"></i> Add More
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <small class="text-muted"><i class="fas fa-info-circle me-1"></i>You can upload multiple documents (PDF, JPG, PNG)</small>
+        </div>
+
+        <!-- Step 5 - Bank Details -->
+        <div class="form-step d-none" id="step-5">
+          <div class="step-header mb-4">
+            <h5 class="text-primary"><i class="fas fa-university me-2"></i>Bank Information</h5>
+            <hr class="title-underline">
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label"><i class="fas fa-credit-card me-2 text-primary"></i>Account Number <span class="text-danger">*</span></label>
+              <input type="text" name="account_number" class="form-control modern-input required-field" value="{{ emp.account_number }}" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label"><i class="fas fa-qrcode me-2 text-primary"></i>IFSC Code <span class="text-danger">*</span></label>
+              <input type="text" name="ifsc_code" class="form-control modern-input required-field" value="{{ emp.ifsc_code }}" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label"><i class="fas fa-user me-2 text-primary"></i>Account Holder Name <span class="text-danger">*</span></label>
+              <input type="text" name="account_holder_name" class="form-control modern-input required-field" value="{{ emp.account_holder_name }}" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label"><i class="fas fa-landmark me-2 text-primary"></i>Bank Name <span class="text-danger">*</span></label>
+              <input type="text" name="bank_name" class="form-control modern-input required-field" value="{{ emp.bank_name }}" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              <label class="form-label"><i class="fas fa-map-marker-alt me-2 text-primary"></i>Bank Address <span class="text-danger">*</span></label>
+              <textarea name="bank_address" class="form-control modern-input required-field" rows="3">{{ emp.bank_address }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="text-end mt-5 pt-3 border-top">
+          <button type="button" id="prevBtn" class="btn btn-secondary btn-nav" disabled>
+            <i class="fas fa-arrow-left me-2"></i>Previous
+          </button>
+          <button type="button" id="nextBtn" class="btn btn-primary btn-nav">
+            Next<i class="fas fa-arrow-right ms-2"></i>
+          </button>
+          <button type="submit" id="submitBtn" class="btn btn-success btn-nav d-none">
+            <i class="fas fa-check-circle me-2"></i>Update Employee
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Scripts for checking uniqueness -->
+<script>
+document.getElementById("emailInput").addEventListener("input", async function () {
+  const email = this.value.trim();
+  const feedback = document.getElementById("emailFeedback");
+  const originalEmail = "{{ emp.email }}";
+
+  if (email.length > 5 && email.includes('@') && email !== originalEmail) {
+    try {
+      const response = await fetch(`/check-email-unique/?email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+
+      if (!data.is_unique) {
+        feedback.textContent = "⚠ This email is already registered!";
+        feedback.style.color = "red";
+      } else {
+        feedback.textContent = "";
+      }
+    } catch (error) {
+      console.error("Error checking email:", error);
+    }
+  } else {
+    feedback.textContent = "";
+  }
+});
+
+document.getElementById("usernameInput").addEventListener("input", async function () {
+  const username = this.value.trim();
+  const feedback = document.getElementById("usernameFeedback");
+  const originalUsername = "{{ emp.username }}";
+
+  if (username.length > 3 && username !== originalUsername) {
+    try {
+      const response = await fetch(`/check-username-unique/?username=${encodeURIComponent(username)}`);
+      const data = await response.json();
+
+      if (!data.is_unique) {
+        feedback.textContent = "⚠ This username is already taken!";
+        feedback.style.color = "red";
+      } else {
+        feedback.textContent = "";
+      }
+    } catch (error) {
+      console.error("Error checking username:", error);
+    }
+  } else {
+    feedback.textContent = "";
+  }
+});
+
+// NEW: Update training status info when joining date changes
+document.addEventListener("DOMContentLoaded", function() {
+  const joiningDateInput = document.querySelector("input[name='joining_date']");
+  const trainingStatusInfo = document.querySelector("#step-4 .form-control.bg-light span");
+  
+  if (joiningDateInput && trainingStatusInfo) {
+    function updateTrainingStatusInfo() {
+      if (joiningDateInput.value) {
+        const joiningDate = new Date(joiningDateInput.value);
+        const today = new Date();
+        const daysDiff = Math.floor((today - joiningDate) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff < 7) {
+          const endDate = new Date(joiningDate);
+          endDate.setDate(endDate.getDate() + 6); // 7 days total (joining date + 6 days)
+          
+          const options = { day: 'numeric', month: 'short', year: 'numeric' };
+          const formattedEndDate = endDate.toLocaleDateString('en-US', options);
+          
+          trainingStatusInfo.textContent = `In Training (Ends: ${formattedEndDate})`;
+          trainingStatusInfo.previousElementSibling.className = "fas fa-graduation-cap me-2 text-warning";
+        } else {
+          trainingStatusInfo.textContent = "Training Completed";
+          trainingStatusInfo.previousElementSibling.className = "fas fa-check-circle me-2 text-success";
+        }
+      }
+    }
+    
+    joiningDateInput.addEventListener("change", updateTrainingStatusInfo);
+    updateTrainingStatusInfo(); // Initialize on page load
+  }
+});
+</script>
+
+<script>
+  let currentStep = 1;
+  const totalSteps = 5;
+
+  async function isEmailUnique(email) {
+    const response = await fetch(`/check-email-unique/?email=${encodeURIComponent(email)}`);
+    const data = await response.json();
+    return data.is_unique;
+  }
+
+  async function isUsernameUnique(username) {
+    const response = await fetch(`/check-username-unique/?username=${encodeURIComponent(username)}`);
+    const data = await response.json();
+    return data.is_unique;
+  }
+
+  function calculateAge(dob) {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  async function validateStepFields(step) {
+    const currentForm = document.querySelector(`#step-${step}`);
+    const requiredInputs = currentForm.querySelectorAll(".required-field");
+
+    for (const input of requiredInputs) {
+      if (!input.value.trim()) {
+        alert("Please fill all required fields.");
+        input.focus();
+        return false;
+      }
+    }
+
+    if (step === 1) {
+      const email = document.querySelector("input[name='email']").value.trim();
+      const username = document.querySelector("input[name='username']").value.trim();
+      const mobile = document.querySelector("input[name='mobile']").value.trim();
+      const dob = document.querySelector("input[name='dob']").value;
+      const originalEmail = "{{ emp.email }}";
+      const originalUsername = "{{ emp.username }}";
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert("Please enter a valid email address.");
+        return false;
+      }
+
+      if (email !== originalEmail) {
+        const emailUnique = await isEmailUnique(email);
+        if (!emailUnique) {
+          alert("This email is already registered.");
+          return false;
+        }
+      }
+
+      if (username.length < 4) {
+        alert("Username must be at least 4 characters long.");
+        return false;
+      }
+
+      if (username !== originalUsername) {
+        const usernameUnique = await isUsernameUnique(username);
+        if (!usernameUnique) {
+          alert("This username is already taken.");
+          return false;
+        }
+      }
+
+      if (!/^\d{10}$/.test(mobile)) {
+        alert("Mobile number must be exactly 10 digits.");
+        return false;
+      }
+
+      const age = calculateAge(dob);
+      if (age < 18 || age > 60) {
+        alert("Age must be between 18 and 60 years.");
+        return false;
+      }
+    }
+
+    if (step === 2) {
+      const pincode = document.querySelector("input[name='pincode']").value.trim();
+      if (!/^\d{6}$/.test(pincode)) {
+        alert("Pincode must be exactly 6 digits.");
+        return false;
+      }
+    }
+
+    if (step === 3) {
+      const emergencyNumber = document.querySelector("input[name='emergency_contact_number']").value.trim();
+      if (!/^\d{10}$/.test(emergencyNumber)) {
+        alert("Emergency contact number must be exactly 10 digits.");
+        return false;
+      }
+    }
+
+    if (step === 4) {
+      const baseSalary = document.querySelector("input[name='base_salary']").value.trim();
+      const joiningDate = document.querySelector("input[name='joining_date']").value.trim();
+      
+      if (!baseSalary || baseSalary <= 0) {
+        alert("Please enter a valid base salary.");
+        return false;
+      }
+      
+      if (!joiningDate) {
+        alert("Please enter a valid date of joining.");
+        return false;
+      }
+    }
+
+    if (step === 5) {
+      const accountNumber = document.querySelector("input[name='account_number']").value.trim();
+      const ifscCode = document.querySelector("input[name='ifsc_code']").value.trim();
+      
+      if (!accountNumber) {
+        alert("Please enter a valid account number.");
+        return false;
+      }
+      
+      if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifscCode)) {
+        alert("Please enter a valid IFSC code.");
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  document.getElementById("nextBtn").addEventListener("click", async () => {
+    if (!(await validateStepFields(currentStep))) return;
+    if (currentStep < totalSteps) {
+      currentStep++;
+      showStep(currentStep);
+    }
+  });
+
+  document.getElementById("prevBtn").addEventListener("click", () => {
+    if (currentStep > 1) {
+      currentStep--;
+      showStep(currentStep);
+    }
+  });
+
+  function showStep(step) {
+    document.querySelectorAll(".form-step").forEach((el, idx) => el.classList.toggle("d-none", idx + 1 !== step));
+    document.getElementById("stepNumber").innerText = step;
+
+    for (let i = 1; i <= totalSteps; i++) {
+      const bubble = document.getElementById("step-bubble-" + i);
+      const line = document.getElementById("line-" + i);
+      bubble.classList.remove("active", "completed");
+      if (i < step) bubble.classList.add("completed");
+      else if (i === step) bubble.classList.add("active");
+      if (line) line.classList.toggle("active", i < step);
+    }
+
+    document.getElementById("prevBtn").disabled = step === 1;
+    document.getElementById("nextBtn").classList.toggle("d-none", step === totalSteps);
+    document.getElementById("submitBtn").classList.toggle("d-none", step !== totalSteps);
+  }
+
+  showStep(currentStep);
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const documentContainer = document.getElementById("documentContainer");
+
+    documentContainer.addEventListener("click", function (e) {
+      if (e.target.classList.contains("add-document-btn") || 
+          e.target.parentElement.classList.contains("add-document-btn")) {
+        e.preventDefault();
+
+        const newRow = document.createElement("div");
+        newRow.className = "document-row mb-3";
+        newRow.innerHTML = `
+          <div class="row align-items-end">
+            <div class="col-md-5 mb-3">
+              <label class="form-label"><i class="fas fa-file-signature me-2 text-primary"></i>Document Name</label>
+              <input type="text" name="document_name[]" class="form-control modern-input" placeholder="e.g., Aadhar Card, PAN Card" />
+            </div>
+            <div class="col-md-5 mb-3">
+              <label class="form-label"><i class="fas fa-upload me-2 text-primary"></i>Upload Document</label>
+              <input type="file" name="documents[]" class="form-control modern-input" accept=".pdf,.jpg,.jpeg,.png" />
+            </div>
+            <div class="col-md-2 mb-3">
+              <button type="button" class="btn btn-danger btn-sm remove-document-btn w-100">
+                <i class="fas fa-trash-alt me-1"></i> Remove
+              </button>
+            </div>
+          </div>
+        `;
+
+        documentContainer.appendChild(newRow);
+      }
+
+      if (e.target.classList.contains("remove-document-btn") || 
+          e.target.parentElement.classList.contains("remove-document-btn")) {
+        e.preventDefault();
+        const row = e.target.closest(".document-row");
+        if (documentContainer.children.length > 1) {
+          row.remove();
+        } else {
+          alert("At least one document row must remain.");
+        }
+      }
+    });
+  });
+</script>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .modern-input {
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+    color: #000;
+  }
+
+  .modern-input:focus {
+    border-color: #0152a4 !important;
+    background-color: #f8f9ff !important;
+    box-shadow: 0 0 0 0.2rem rgba(1, 82, 164, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  .step-header h5 {
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .title-underline {
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(to right, #0152a4, #28a745);
+    border: none;
+    margin-top: 10px;
+  }
+
+  .step-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .step-progressbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+  }
+
+  .step {
+    width: 55px;
+    height: 55px;
+    background: linear-gradient(135deg, #ffe1c1 0%, #ffd4a3 100%);
+    color: #333;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 20px;
+    z-index: 2;
+    transition: all 0.4s ease;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+
+  .step.active {
+    background: linear-gradient(135deg, #0152a4 0%, #0168cc 100%);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(1, 82, 164, 0.4);
+  }
+
+  .step.completed {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+  }
+
+  .step i {
+    font-size: 22px;
+  }
+
+  .progress-line {
+    width: 80px;
+    height: 5px;
+    background-color: #e0e0e0;
+    margin: 0 10px;
+    z-index: 1;
+    transition: all 0.4s ease;
+    border-radius: 10px;
+  }
+
+  .progress-line.active {
+    background: linear-gradient(to right, #28a745, #34ce57);
+    box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+  }
+
+  .step-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  .document-row {
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+  }
+
+  .document-row:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+  }
+
+  .btn-nav {
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin: 0 5px;
+  }
+
+  .btn-nav:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  .add-document-btn,
+  .remove-document-btn {
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .add-document-btn:hover,
+  .remove-document-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .card-header.table-title-bar {
+    padding: 20px;
+    font-size: 18px;
+    border-bottom: 3px solid rgba(255,255,255,0.2);
+  }
+
+  label .text-danger {
+    font-weight: normal;
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+</style>
+{% endblock %}

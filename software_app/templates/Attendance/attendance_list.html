@@ -1,0 +1,1382 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}Attendance List - {{ month_name }} {{ year }}{% endblock %}
+
+{% block content %}
+<!-- Enhanced Ribbon Header -->
+<div class="ribbon-header-enhanced d-flex justify-content-between align-items-center px-4 pb-4 mb-4">
+  <div class="d-flex align-items-center">
+    <div class="icon-wrapper me-3">
+      <i class="fas fa-calendar-check"></i>
+    </div>
+    <div>
+      <div class="page-title">Attendance Sheet</div>
+      <div class="page-subtitle">
+        <i class="fas fa-calendar me-2"></i>{{ month_name }} {{ year }}
+        <span class="mx-2">•</span>
+        <i class="fas fa-clock me-2"></i>Auto-calculated from Geofence Punches
+      </div>
+      {% if is_approved %}
+        <div class="mt-2">
+          <span class="status-badge approved">
+            <i class="fas fa-check-circle me-2"></i>APPROVED
+          </span>
+          {% if approval.approved_up_to_date %}
+            <small class="text-muted ms-2">(up to {{ approval.approved_up_to_date|date:"d M Y" }})</small>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="breadcrumb-modern">
+    <span class="breadcrumb-item">HOME</span>
+    <i class="fas fa-chevron-right mx-2"></i>
+    <span class="breadcrumb-item active">Attendance</span>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <!-- Enhanced Filter & Approve Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card modern-card">
+        <div class="card-body p-4">
+          <div class="row align-items-end">
+            <!-- Filter Section -->
+            <div class="col-lg-9">
+              <form method="GET" class="row g-3" id="filterForm">
+                <div class="col-md-4">
+                  <label class="modern-label">
+                    <i class="fas fa-users me-2 text-primary"></i>Employee Filter
+                  </label>
+                  <select name="employee" class="modern-select" onchange="document.getElementById('filterForm').submit()">
+                    <option value="">-- All Employees --</option>
+                    {% for emp in employees %}
+                      <option value="{{ emp.id }}" {% if request.GET.employee == emp.id|stringformat:"s" %}selected{% endif %}>
+                        {{ emp.employee_id }} - {{ emp.full_name }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="modern-label">
+                    <i class="fas fa-calendar-alt me-2 text-info"></i>Month & Year
+                  </label>
+                  <input type="month" name="month_year" class="modern-input" 
+                         value="{{ year }}-{{ month|stringformat:'02d' }}"
+                         onchange="this.form.submit()">
+                </div>
+
+                <div class="col-md-4">
+                  <button type="button" class="btn btn-modern btn-reset w-100" onclick="window.location.href='{% url 'attendance_list' %}'">
+                    <i class="fas fa-redo me-2"></i>Reset Filters
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Approve Button Section -->
+            <div class="col-lg-3">
+              <div class="approve-section">
+                {% if is_approved %}
+                  <button class="btn btn-modern btn-reapprove w-100" onclick="approveMonth()">
+                    <i class="fas fa-sync-alt me-2"></i>Re-Approve Month
+                  </button>
+                  <div class="approval-info mt-2">
+                    <small class="d-block">
+                      <i class="fas fa-user-check me-1"></i>{{ approval.approved_by_name }}
+                    </small>
+                    <small class="d-block">
+                      <i class="fas fa-clock me-1"></i>{{ approval.approval_date|date:"d M Y, g:i A" }}
+                    </small>
+                  </div>
+                {% else %}
+                  <button class="btn btn-modern btn-approve w-100" onclick="approveMonth()">
+                    <i class="fas fa-check-double me-2"></i>Approve Month
+                  </button>
+                  <small class="text-success d-block text-center mt-2">
+                    <i class="fas fa-info-circle me-1"></i>Approves all employees
+                  </small>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Attendance Table -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card modern-card">
+        <div class="card-header-modern">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="fas fa-table me-2"></i>Monthly Attendance Overview
+            </h5>
+            <button class="btn btn-sm btn-light" onclick="window.print()">
+              <i class="fas fa-print me-2"></i>Print Report
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          {% if attendance_data %}
+          <div class="table-responsive">
+            <table class="attendance-table">
+              <thead>
+                <tr>
+                  <th class="fixed-col">S.No</th>
+                  <th class="fixed-col">Emp ID</th>
+                  <th class="fixed-col">Employee Name</th>
+                  <th class="fixed-col">Role</th>
+                  
+                  <!-- Days columns -->
+                  {% for day in attendance_data.0.daily_status %}
+                    <th class="day-col">
+                      <div class="day-number">{{ day.day }}</div>
+                      <div class="day-name">{{ day.date|date:"D" }}</div>
+                    </th>
+                  {% endfor %}
+                  
+                  <th class="summary-col present-col">
+                    <i class="fas fa-check-circle"></i> Present
+                  </th>
+                  <th class="summary-col absent-col">
+                    <i class="fas fa-times-circle"></i> Absent
+                  </th>
+                  <th class="summary-col halfday-col">
+                    <i class="fas fa-adjust"></i> Half Day
+                  </th>
+                  <th class="summary-col leave-col">
+                    <i class="fas fa-plane"></i> Leave
+                  </th>
+                  <th class="summary-col holiday-col">
+                    <i class="fas fa-umbrella-beach"></i> Holiday
+                  </th>
+                  <!-- 🔥 NEW: LWP and Training columns -->
+                  <th class="summary-col lwp-col">
+                    <i class="fas fa-money-bill-wave"></i> LWP
+                  </th>
+                  <th class="summary-col training-col">
+                    <i class="fas fa-graduation-cap"></i> Training
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for emp_data in attendance_data %}
+                <tr>
+                  <td class="text-center fw-bold">{{ forloop.counter }}</td>
+                  <td class="text-center">
+                    <span class="emp-id-badge">{{ emp_data.employee.employee_id }}</span>
+                  </td>
+                  <td class="text-start">
+                    <div class="employee-name">{{ emp_data.employee.full_name }}</div>
+                  </td>
+                  <td class="text-center">
+                    <span class="role-badge">{{ emp_data.employee.role|upper }}</span>
+                  </td>
+                  
+                  <!-- Daily attendance status -->
+                  {% for day_data in emp_data.daily_status %}
+                    <td class="attendance-cell status-{{ day_data.status }}"
+                        {% if day_data.record_id %}
+                          onclick="showAttendanceDetail({{ day_data.record_id }})"
+                          style="cursor: pointer;"
+                          title="Click to view/edit"
+                        {% endif %}>
+                      <span class="status-badge-cell">
+                        {% if day_data.status == 'present' %}P
+                        {% elif day_data.status == 'absent' %}A
+                        {% elif day_data.status == 'half_day' %}HD
+                        {% elif day_data.status == 'on_leave' %}L
+                        {% elif day_data.status == 'holiday' %}H
+                        {% elif day_data.status == 'lwp' %}LWP
+                        {% elif day_data.status == 'training' %}T
+                        {% else %}-
+                        {% endif %}
+                      </span>
+                    </td>
+                  {% endfor %}
+                  
+                  <td class="summary-cell text-center fw-bold text-success">{{ emp_data.present|default:0 }}</td>
+                  <td class="summary-cell text-center fw-bold text-danger">{{ emp_data.absent|default:0 }}</td>
+                  <td class="summary-cell text-center fw-bold text-warning">{{ emp_data.half_day|default:0 }}</td>
+                  <td class="summary-cell text-center fw-bold text-info">{{ emp_data.leave|default:0 }}</td>
+                  <td class="summary-cell text-center fw-bold text-primary">{{ emp_data.holiday|default:0 }}</td>
+                  <!-- 🔥 NEW: LWP and Training counts -->
+                  <td class="summary-cell text-center fw-bold text-secondary">{{ emp_data.lwp|default:0 }}</td>
+                  <td class="summary-cell text-center fw-bold text-warning">{{ emp_data.training|default:0 }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h5>No Attendance Data Found</h5>
+            <p>No attendance records for selected filters.</p>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Enhanced Legend -->
+        <div class="card-footer-modern">
+          <div class="legend-container">
+            <div class="legend-item">
+              <span class="legend-badge badge-present">P</span>
+              <span>Present (≥7 hrs)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge badge-absent">A</span>
+              <span>Absent</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge badge-halfday">HD</span>
+              <span>Half Day</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge badge-leave">L</span>
+              <span>On Leave</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge badge-holiday">H</span>
+              <span>Holiday</span>
+            </div>
+            <!-- 🔥 NEW: LWP and Training badges -->
+            <div class="legend-item">
+              <span class="legend-badge badge-lwp">LWP</span>
+              <span>Leave Without Pay</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge badge-training">T</span>
+              <span>Training (₹100/day)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-badge badge-unmarked">-</span>
+              <span>Not Marked</span>
+            </div>
+          </div>
+          <div class="legend-note">
+            <i class="fas fa-info-circle me-2"></i>
+            Auto-calculated based on geofencing punches. Click any cell to view/edit attendance.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Attendance Detail Modal -->
+<div class="modal fade" id="attendanceDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content modern-modal">
+      <div class="modal-header-modern">
+        <h5 class="modal-title">
+          <i class="fas fa-info-circle me-2"></i>Attendance Details & Management
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalContent">
+        <div class="loading-state">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p>Loading attendance details...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Change Status Modal -->
+<div class="modal fade" id="changeStatusModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content modern-modal">
+      <div class="modal-header-gradient">
+        <h5 class="modal-title">
+          <i class="fas fa-edit me-2"></i>Change Attendance Status
+            <button type="button" class="btn-close btn-close-white align-items-end" data-bs-dismiss="modal"></button>
+        </h5>
+      </div>
+      <div class="modal-body p-4">
+        <form id="changeStatusForm">
+          <input type="hidden" id="change_attendance_id" name="attendance_id">
+          
+          <!-- Row 1: Employee Name & Date -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label class="modern-label">
+                <i class="fas fa-user me-2 text-primary"></i>Employee Name
+              </label>
+              <input type="text" class="modern-input-readonly" id="change_employee_name" readonly>
+            </div>
+            <div class="col-md-6">
+              <label class="modern-label">
+                <i class="fas fa-calendar-day me-2 text-info"></i>Date
+              </label>
+              <input type="text" class="modern-input-readonly" id="change_date" readonly>
+            </div>
+          </div>
+
+          <!-- Row 2: Current Status & New Status -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label class="modern-label">
+                <i class="fas fa-clock me-2 text-secondary"></i>Current Status
+              </label>
+              <input type="text" class="modern-input-readonly" id="change_current_status" readonly>
+            </div>
+            <div class="col-md-6">
+              <label class="modern-label">
+                <i class="fas fa-sync-alt me-2 text-success"></i>New Status 
+                <span class="text-danger">*</span>
+              </label>
+              <select class="modern-select" id="change_new_status" name="new_status" required>
+                <option value="">-- Select New Status --</option>
+                <option value="present">✅ Present (P)</option>
+                <option value="half_day">⚠️ Half Day (HD)</option>
+                <option value="absent">❌ Absent (A)</option>
+                <option value="on_leave">🏖️ On Leave (L)</option>
+                <!-- 🔥 NEW: LWP and Training options -->
+                <option value="lwp">💸 Leave Without Pay (LWP)</option>
+                <option value="training">🎓 Training (T)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 3: Reason (Full Width) -->
+          <div class="mb-4">
+            <label class="modern-label">
+              <i class="fas fa-comment-dots me-2 text-warning"></i>Reason for Change 
+              <span class="text-danger">*</span>
+            </label>
+            <textarea class="modern-textarea" 
+                      id="change_reason" 
+                      name="reason" 
+                      rows="4" 
+                      placeholder="Enter detailed reason for status change (e.g., employee was on emergency leave, punch issue, system error...)" 
+                      required></textarea>
+            <small class="form-text text-muted">
+              <i class="fas fa-info-circle me-1"></i>
+              This will be logged for audit purposes with your credentials
+            </small>
+          </div>
+
+          <!-- Info Alert -->
+          <div class="alert alert-modern">
+            <i class="fas fa-shield-alt me-2"></i>
+            <strong>Audit Trail:</strong> This change will be permanently logged with your name, 
+            role, and timestamp for security and compliance.
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer-modern">
+        <button type="button" class="btn btn-modern btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-2"></i>Cancel
+        </button>
+        <button type="button" class="btn btn-modern btn-primary" id="submitStatusChangeBtn" onclick="submitStatusChange()">
+          <i class="fas fa-check-circle me-2"></i>Change Status
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Approve/Re-Approve Confirmation Modal -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content modern-modal">
+      <div class="modal-header-modern {% if is_approved %}bg-warning{% else %}bg-primary{% endif %}">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          {% if is_approved %}Re-Approve Attendance{% else %}Confirm Approval{% endif %}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        {% if is_approved %}
+        <div class="alert alert-warning border-0">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Re-Approval Notice:</strong> Previous approval will be updated with current data.
+        </div>
+        {% else %}
+        <div class="alert alert-info border-0">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Important:</strong> Once approved, you can re-approve later if needed.
+        </div>
+        {% endif %}
+        
+        <div class="approval-details">
+          <div class="detail-row">
+            <span class="detail-label">Month:</span>
+            <span class="detail-value">{{ month_name }} {{ year }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Total Employees:</span>
+            <span class="detail-value">{{ attendance_data|length }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Approval Date:</span>
+            <span class="detail-value text-primary">Today</span>
+          </div>
+        </div>
+
+        <div class="approval-actions mt-3">
+          <p class="text-muted mb-2">
+            <i class="fas fa-check-circle me-2"></i>
+            {% if is_approved %}This will update and regenerate salary slips{% else %}This will generate salary slips for all employees{% endif %}
+          </p>
+        </div>
+        
+        <div class="form-check mt-3">
+          <input class="form-check-input" type="checkbox" id="confirmCheck">
+          <label class="form-check-label" for="confirmCheck">
+            {% if is_approved %}
+              I confirm that I want to re-approve and update the records
+            {% else %}
+              I confirm that all attendance data is correct
+            {% endif %}
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer-modern">
+        <button type="button" class="btn btn-modern btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-2"></i>Cancel
+        </button>
+        <button type="button" class="btn btn-modern {% if is_approved %}btn-warning{% else %}btn-primary{% endif %}" 
+                onclick="submitApproval()" id="confirmApproveBtn" disabled>
+          <i class="fas {% if is_approved %}fa-sync-alt{% else %}fa-check-double{% endif %} me-2"></i>
+          {% if is_approved %}Re-Approve{% else %}Approve{% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ============================================
+   ENHANCED PAGE STYLING
+   ============================================ */
+
+/* Ribbon Header Enhanced */
+.ribbon-header-enhanced {
+  background: teal;
+  border-radius: 15px;
+  padding: 2rem;
+  color: white;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  margin-bottom: 2rem;
+}
+
+.icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+}
+
+.page-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+.status-badge.approved {
+  background: rgba(40, 167, 69, 0.9);
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.breadcrumb-modern {
+  color: rgba(255,255,255,0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.breadcrumb-item.active {
+  opacity: 0.7;
+}
+
+/* Modern Cards */
+.modern-card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.modern-card:hover {
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+/* Modern Form Controls */
+.modern-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.modern-input,
+.modern-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.modern-input:focus,
+.modern-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none;
+}
+
+.modern-input-readonly {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: #f7fafc;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.modern-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  resize: none;
+}
+
+.modern-textarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none;
+}
+
+/* Modern Buttons */
+.btn-modern {
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  border: none;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.btn-reset {
+  background: #718096;
+  color: white;
+}
+
+.btn-reset:hover {
+  background: #4a5568;
+  color: white;
+}
+
+.btn-approve {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+}
+
+.btn-reapprove {
+  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+}
+
+.btn-secondary {
+  background: #718096;
+  color: white;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.btn-warning {
+  background: #f6ad55;
+  color: white;
+}
+
+/* Approve Section */
+.approve-section {
+  text-align: center;
+}
+
+.approval-info {
+  font-size: 0.85rem;
+  color: #718096;
+  text-align: center;
+}
+
+/* Card Header Modern */
+.card-header-modern {
+  background: teal;
+  color: white;
+  padding: 1.25rem 1.5rem;
+  border: none;
+}
+
+.card-header-modern h5 {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Attendance Table */
+.attendance-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.attendance-table thead th {
+  background: #2d3748;
+  color: white;
+  padding: 1rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+  border: 1px solid #1a202c;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.attendance-table tbody td {
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+}
+
+.attendance-table tbody tr:hover {
+  background: #f7fafc;
+}
+
+.fixed-col {
+  min-width: 120px;
+  position: sticky;
+  background: #2d3748 !important;
+}
+
+.day-col {
+  min-width: 45px;
+  max-width: 45px;
+}
+
+.day-number {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.day-name {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.summary-col {
+  min-width: 90px;
+  font-weight: 600;
+}
+
+.present-col { background: #48bb78 !important; }
+.absent-col { background: #f56565 !important; }
+.halfday-col { background: #ed8936 !important; }
+.leave-col { background: #4299e1 !important; }
+.holiday-col { background: #9f7aea !important; }
+/* 🔥 NEW: LWP and Training column colors */
+.lwp-col { background: #718096 !important; }
+.training-col { background: #f6ad55 !important; }
+
+/* Attendance Cell Styling */
+.attendance-cell {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.attendance-cell:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  z-index: 5;
+  position: relative;
+}
+
+.status-present { background: rgba(72, 187, 120, 0.15) !important; color: #2f855a; }
+.status-absent { background: rgba(245, 101, 101, 0.15) !important; color: #c53030; }
+.status-half_day { background: rgba(237, 137, 54, 0.15) !important; color: #c05621; }
+.status-on_leave { background: rgba(66, 153, 225, 0.15) !important; color: #2c5282; }
+.status-holiday { background: rgba(159, 122, 234, 0.15) !important; color: #6b46c1; }
+/* 🔥 NEW: LWP and Training cell colors */
+.status-lwp { background: rgba(113, 128, 150, 0.15) !important; color: #4a5568; }
+.status-training { background: rgba(246, 173, 85, 0.15) !important; color: #c05621; }
+
+.status-badge-cell {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+}
+
+/* Employee Badges */
+.emp-id-badge {
+  background: #667eea;
+  color: white;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: inline-block;
+}
+
+.employee-name {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.role-badge {
+  background: #4299e1;
+  color: white;
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Summary Cells */
+.summary-cell {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Legend */
+.card-footer-modern {
+  background: #f7fafc;
+  padding: 1.5rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+.legend-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.legend-badge {
+  padding: 0.4rem 0.7rem;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  min-width: 35px;
+  text-align: center;
+}
+
+.badge-present { background: #48bb78; color: white; }
+.badge-absent { background: #f56565; color: white; }
+.badge-halfday { background: #ed8936; color: white; }
+.badge-leave { background: #4299e1; color: white; }
+.badge-holiday { background: #9f7aea; color: white; }
+/* 🔥 NEW: LWP and Training badges */
+.badge-lwp { background: #718096; color: white; }
+.badge-training { background: #f6ad55; color: white; }
+.badge-unmarked { background: #cbd5e0; color: #2d3748; }
+
+.legend-note {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #718096;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #a0aec0;
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.5;
+}
+
+.empty-state h5 {
+  color: #718096;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: #a0aec0;
+}
+
+/* Modal Enhancements */
+.modern-modal {
+  border: none;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modal-header-modern {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border: none;
+}
+
+.modal-header-gradient {
+  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+  color: white;
+  padding: 1.5rem;
+  border: none;
+}
+
+.modal-footer-modern {
+  background: #f7fafc;
+  padding: 1.25rem 1.5rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+.alert-modern {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 1rem;
+  color: #1565c0;
+  font-size: 0.9rem;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 3rem;
+  color: #718096;
+}
+
+.loading-state p {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+/* Approval Details */
+.approval-details {
+  background: #f7fafc;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.detail-value {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.approval-actions {
+  background: #edf2f7;
+  border-left: 4px solid #4299e1;
+  padding: 1rem;
+  border-radius: 5px;
+}
+
+/* Change Log Item */
+.change-log-item {
+  border-left: 3px solid #667eea;
+  padding-left: 15px;
+  margin-bottom: 15px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .ribbon-header-enhanced {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .icon-wrapper {
+    margin: 0 auto 1rem;
+  }
+
+  .breadcrumb-modern {
+    margin-top: 1rem;
+  }
+
+  .legend-container {
+    gap: 1rem;
+  }
+
+  .btn-modern {
+    padding: 0.6rem 1.2rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .attendance-table {
+    font-size: 0.8rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .ribbon-header-enhanced,
+  .btn,
+  .card-footer-modern,
+  .approve-section,
+  .modern-card .card-body .row:first-child {
+    display: none !important;
+  }
+
+  .modern-card {
+    box-shadow: none !important;
+  }
+
+  .attendance-table thead th {
+    position: relative !important;
+  }
+}
+
+/* Scrollbar Styling */
+.table-responsive::-webkit-scrollbar {
+  height: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
+}
+
+/* Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modern-card {
+  animation: fadeInUp 0.5s ease;
+}
+
+/* Additional Hover Effects */
+.modern-select:hover,
+.modern-input:hover {
+  border-color: #cbd5e0;
+}
+
+.emp-id-badge:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+.role-badge:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+</style>
+
+<script>
+let currentAttendanceId = null;
+let currentAttendanceData = null;
+
+// Show attendance detail modal
+function showAttendanceDetail(attendanceId) {
+  currentAttendanceId = attendanceId;
+  const modal = new bootstrap.Modal(document.getElementById('attendanceDetailModal'));
+  modal.show();
+  
+  // Fetch details via AJAX
+  fetch(`/attendance/detail/${attendanceId}/`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        currentAttendanceData = data;
+        renderAttendanceDetail(data);
+      } else {
+        document.getElementById('modalContent').innerHTML = `
+          <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle me-2"></i>${data.message}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      document.getElementById('modalContent').innerHTML = `
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-circle me-2"></i>Failed to load details. Please try again.
+        </div>
+      `;
+    });
+}
+
+function renderAttendanceDetail(data) {
+  let html = `
+    <div class="row">
+      <!-- Left Column: Attendance Info -->
+      <div class="col-md-8">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <h6 class="text-primary"><i class="fas fa-user me-2"></i>Employee Info</h6>
+            <p class="mb-1"><strong>Name:</strong> ${data.employee_name}</p>
+            <p class="mb-1"><strong>ID:</strong> ${data.employee_id}</p>
+            <p class="mb-1"><strong>Date:</strong> ${data.date}</p>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-success"><i class="fas fa-clock me-2"></i>Timing</h6>
+            <p class="mb-1"><strong>Check In:</strong> ${data.check_in}</p>
+            <p class="mb-1"><strong>Check Out:</strong> ${data.check_out}</p>
+            <p class="mb-1"><strong>Work Hours:</strong> ${data.work_hours.toFixed(2)} hrs</p>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <h6 class="text-warning"><i class="fas fa-coffee me-2"></i>Break Time</h6>
+            <p class="mb-0"><strong>${data.break_minutes}</strong> minutes</p>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-info"><i class="fas fa-clipboard-check me-2"></i>Status</h6>
+            <p class="mb-1">
+              <span class="badge ${
+                data.status.includes('Present') ? 'bg-success' :
+                data.status.includes('Absent') ? 'bg-danger' :
+                data.status.includes('Half') ? 'bg-warning' :
+                data.status.includes('Leave') ? 'bg-info' : 
+                data.status.includes('LWP') ? 'bg-secondary' :
+                data.status.includes('Training') ? 'bg-warning' : 'bg-secondary'
+              }">${data.status}</span>
+              ${data.is_late ? '<span class="badge bg-danger ms-2">Late</span>' : ''}
+            </p>
+            <button class="btn btn-sm btn-warning" onclick="openChangeStatusModal()">
+              <i class="fas fa-edit me-1"></i>Change Status
+            </button>
+          </div>
+        </div>
+
+        <!-- Punch History -->
+        ${data.punches && data.punches.length > 0 ? `
+          <div class="mb-3">
+            <h6 class="text-primary"><i class="fas fa-fingerprint me-2"></i>Punch History</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Distance</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${data.punches.map(punch => `
+                    <tr>
+                      <td><strong>${punch.time}</strong></td>
+                      <td>${punch.type}</td>
+                      <td>${punch.distance.toFixed(1)}m</td>
+                      <td>
+                        ${punch.within_geofence ? 
+                          '<i class="fas fa-check-circle text-success"></i>' : 
+                          '<i class="fas fa-times-circle text-danger"></i>'}
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Breaks -->
+        ${data.breaks && data.breaks.length > 0 ? `
+          <div class="mb-3">
+            <h6 class="text-warning"><i class="fas fa-coffee me-2"></i>Break Details</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Duration</th>
+                    <th>Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${data.breaks.map(brk => `
+                    <tr>
+                      <td>${brk.start}</td>
+                      <td>${brk.end}</td>
+                      <td><strong>${brk.duration}</strong> mins</td>
+                      <td>${brk.is_lunch ? '<span class="badge bg-success">Lunch</span>' : '<span class="badge bg-secondary">Regular</span>'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Remarks -->
+        ${data.remarks ? `
+          <div class="alert alert-info mb-0">
+            <strong><i class="fas fa-comment me-2"></i>Remarks:</strong> ${data.remarks}
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- Right Column: Change Logs -->
+      <div class="col-md-4">
+        <div class="card border-primary">
+          <div class="card-header bg-primary text-white">
+            <h6 class="mb-0">
+              <i class="fas fa-history me-2"></i>Status Change History
+            </h6>
+          </div>
+          <div class="card-body" id="changeLogsContainer" style="max-height: 500px; overflow-y: auto;">
+            <div class="text-center py-3">
+              <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+              <p class="text-muted mb-0 mt-2 small">Loading change logs...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('modalContent').innerHTML = html;
+  
+  // Load change logs
+  loadChangeLogs(currentAttendanceId);
+}
+
+function loadChangeLogs(attendanceId) {
+  fetch(`/attendance/change-logs/${attendanceId}/`)
+    .then(response => response.json())
+    .then(data => {
+      const container = document.getElementById('changeLogsContainer');
+      
+      if (data.success && data.logs.length > 0) {
+        let html = '';
+        data.logs.forEach(log => {
+          html += `
+            <div class="change-log-item mb-3 pb-3 border-bottom">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="badge bg-secondary">${log.old_status}</span>
+                <i class="fas fa-arrow-right mx-2 text-muted"></i>
+                <span class="badge bg-primary">${log.new_status}</span>
+              </div>
+              <p class="mb-1 small"><strong>Reason:</strong> ${log.reason}</p>
+              <div class="small text-muted">
+                <i class="fas fa-user me-1"></i>${log.changed_by} 
+                <span class="badge bg-info text-dark">${log.changed_by_role}</span>
+              </div>
+              <div class="small text-muted">
+                <i class="fas fa-clock me-1"></i>${log.changed_at}
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      } else {
+        container.innerHTML = `
+          <div class="text-center py-4">
+            <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+            <p class="text-muted mb-0 small">No status changes yet</p>
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      document.getElementById('changeLogsContainer').innerHTML = `
+        <div class="alert alert-danger small mb-0">
+          Failed to load change logs
+        </div>
+      `;
+    });
+}
+
+function openChangeStatusModal() {
+  if (!currentAttendanceData) return;
+  
+  // Close detail modal
+  bootstrap.Modal.getInstance(document.getElementById('attendanceDetailModal')).hide();
+  
+  // Populate change status form
+  document.getElementById('change_attendance_id').value = currentAttendanceId;
+  document.getElementById('change_employee_name').value = currentAttendanceData.employee_name;
+  document.getElementById('change_date').value = currentAttendanceData.date;
+  document.getElementById('change_current_status').value = currentAttendanceData.status;
+  
+  // Reset form
+  document.getElementById('change_new_status').value = '';
+  document.getElementById('change_reason').value = '';
+  
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('changeStatusModal'));
+  modal.show();
+}
+
+function submitStatusChange() {
+  const form = document.getElementById('changeStatusForm');
+  
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+  
+  const formData = new FormData(form);
+  formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+  
+  // Disable button
+  const btn = document.getElementById('submitStatusChangeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Changing...';
+  
+  fetch("{% url 'change_attendance_status' %}", {
+    method: "POST",
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('✅ ' + data.message);
+      bootstrap.Modal.getInstance(document.getElementById('changeStatusModal')).hide();
+      location.reload();
+    } else {
+      alert('❌ ' + data.message);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Change Status';
+    }
+  })
+  .catch(error => {
+    alert('❌ Connection failed. Please try again.');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Change Status';
+  });
+}
+
+// Approve month confirmation
+function approveMonth() {
+  const modal = new bootstrap.Modal(document.getElementById('approveModal'));
+  modal.show();
+}
+
+// Enable confirm button when checkbox is checked
+document.getElementById('confirmCheck')?.addEventListener('change', function() {
+  document.getElementById('confirmApproveBtn').disabled = !this.checked;
+});
+
+// Submit approval
+function submitApproval() {
+  const btn = document.getElementById('confirmApproveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+  
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '{% url "approve_monthly_attendance" %}';
+  
+  const csrfToken = '{{ csrf_token }}';
+  const csrfInput = document.createElement('input');
+  csrfInput.type = 'hidden';
+  csrfInput.name = 'csrfmiddlewaretoken';
+  csrfInput.value = csrfToken;
+  form.appendChild(csrfInput);
+  
+  const yearInput = document.createElement('input');
+  yearInput.type = 'hidden';
+  yearInput.name = 'year';
+  yearInput.value = '{{ year }}';
+  form.appendChild(yearInput);
+  
+  const monthInput = document.createElement('input');
+  monthInput.type = 'hidden';
+  monthInput.name = 'month';
+  monthInput.value = '{{ month }}';
+  form.appendChild(monthInput);
+  
+  document.body.appendChild(form);
+  form.submit();
+}
+</script>
+{% endblock %}

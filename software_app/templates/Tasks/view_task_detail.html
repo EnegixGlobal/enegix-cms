@@ -1,0 +1,547 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}Task Detail - {{ task.task_id }}{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-info-circle me-3 fs-2" style="color: #138496;"></i>
+    <div class="fw-bold fs-3">Task Details - {{ task.task_id }}</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black"><a href="{% url 'my_assigned_tasks' %}" class="text-decoration-none text-black">My Tasks</a></span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Task Detail</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+      <div class="card shadow-lg mb-4 modern-card">
+        <div class="card-header table-title-bar fw-bold text-white">
+          <i class="fas fa-clipboard-list me-2"></i>Task Information
+        </div>
+        <div class="card-body p-4">
+          <!-- Status & Priority Badges -->
+          <div class="mb-4">
+            {% if task.status == 'pending' %}
+            <span class="badge modern-badge badge-pending fs-6">
+              <i class="fas fa-hourglass-half me-1"></i>PENDING - Please Accept
+            </span>
+            {% elif task.status == 'accepted' %}
+            <span class="badge modern-badge badge-accepted fs-6">
+              <i class="fas fa-spinner me-1"></i>ACCEPTED - In Progress
+            </span>
+            {% elif task.status == 'completed' %}
+            <span class="badge modern-badge badge-completed fs-6">
+              <i class="fas fa-check-circle me-1"></i>COMPLETED
+            </span>
+            {% endif %}
+
+            {% if task.priority == 'urgent' %}
+            <span class="badge modern-badge badge-urgent fs-6 ms-2">
+              <i class="fas fa-exclamation-triangle me-1"></i>URGENT
+            </span>
+            {% elif task.priority == 'high' %}
+            <span class="badge modern-badge badge-high fs-6 ms-2">
+              <i class="fas fa-arrow-up me-1"></i>HIGH PRIORITY
+            </span>
+            {% elif task.priority == 'normal' %}
+            <span class="badge modern-badge badge-normal fs-6 ms-2">
+              <i class="fas fa-minus me-1"></i>NORMAL
+            </span>
+            {% else %}
+            <span class="badge modern-badge badge-low fs-6 ms-2">
+              <i class="fas fa-arrow-down me-1"></i>LOW
+            </span>
+            {% endif %}
+
+            {% if task.is_overdue and task.status != 'completed' %}
+            <span class="badge badge-overdue fs-6 ms-2">
+              <i class="fas fa-exclamation-triangle me-1"></i>OVERDUE
+            </span>
+            {% endif %}
+          </div>
+
+          <!-- Task Title -->
+          <h3 class="mb-4 task-title">{{ task.task_title }}</h3>
+
+          <!-- Task Info Grid -->
+          <div class="info-grid mb-4">
+            <div class="info-item">
+              <i class="fas fa-hashtag text-primary"></i>
+              <span class="info-label">Task ID:</span>
+              <span class="info-value">{{ task.task_id }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-flag text-primary"></i>
+              <span class="info-label">Priority:</span>
+              <span class="info-value text-uppercase">{{ task.get_priority_display }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-calendar-alt text-primary"></i>
+              <span class="info-label">Due Date:</span>
+              <span class="info-value">{{ task.due_date|date:"d M Y" }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-clock text-primary"></i>
+              <span class="info-label">Due Time:</span>
+              <span class="info-value">{{ task.due_time|time:"h:i A" }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-calendar-check text-primary"></i>
+              <span class="info-label">Assigned On:</span>
+              <span class="info-value">{{ task.assigned_date|date:"d M Y, h:i A" }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-user-shield text-primary"></i>
+              <span class="info-label">Assigned By:</span>
+              <span class="info-value">{{ task.assigned_by_name }}</span>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Task Description -->
+          <div class="step-header mb-3">
+            <h5 class="text-primary"><i class="fas fa-file-alt me-2"></i>Task Description</h5>
+            <hr class="title-underline">
+          </div>
+          <div class="description-box mb-4">
+            {{ task.task_description|linebreaks }}
+          </div>
+
+          <!-- Reference File -->
+          {% if task.task_file %}
+          <div class="alert alert-info border-0" style="background: linear-gradient(135deg, #e3f5f8 0%, #d1eef4 100%);">
+            <i class="fas fa-paperclip me-2"></i><strong>Reference File Attached:</strong><br>
+            <a href="{{ task.task_file.url }}" class="btn btn-primary btn-sm mt-2" download>
+              <i class="fas fa-download me-1"></i>Download Reference File
+            </a>
+          </div>
+          {% endif %}
+
+          <hr class="my-4">
+
+          <!-- Accept Button (if pending) -->
+          {% if task.status == 'pending' %}
+          <div class="alert alert-warning border-0" style="background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);">
+            <h5 class="mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Action Required!</h5>
+            <p class="mb-3">Please accept this task to start working. Timer will start once you accept.</p>
+            <form method="POST" action="{% url 'accept_task' task.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-success btn-lg btn-action-accept" 
+                      onclick="return confirm('✅ Accept this task? Timer will start immediately!')">
+                <i class="fas fa-check-circle me-2"></i>Accept Task & Start Timer
+              </button>
+            </form>
+          </div>
+          {% endif %}
+
+          <!-- Timer Display (if accepted) -->
+          {% if task.status == 'accepted' %}
+          <div class="alert alert-info border-0" style="background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);">
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <h5 class="mb-2"><i class="fas fa-stopwatch me-2"></i>Time Elapsed:</h5>
+                <h1 class="mb-0 text-primary timer-display" data-task-id="{{ task.id }}">
+                  <i class="fas fa-spinner fa-spin"></i>
+                </h1>
+              </div>
+              <div class="col-md-6 text-end">
+                <a href="{% url 'complete_task' task.id %}" class="btn btn-success btn-lg btn-action-complete">
+                  <i class="fas fa-check-double me-2"></i>Complete This Task
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Completion Details (if completed) -->
+          {% if task.status == 'completed' %}
+          <div class="alert alert-success border-0" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);">
+            <h5 class="mb-3"><i class="fas fa-check-circle me-2"></i>Task Completed!</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <p class="mb-2"><strong>Completed On:</strong> {{ task.completed_date|date:"d M Y, h:i A" }}</p>
+              </div>
+              <div class="col-md-6">
+                <p class="mb-0">
+                  <strong>Time Taken:</strong> 
+                  <span class="time-highlight">{{ task.time_taken_minutes }} minutes ({% widthratio task.time_taken_minutes 60 1 %}h)</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="mb-2"><i class="fas fa-clipboard-check me-2"></i>Your Completion Notes:</h6>
+          <div class="description-box mb-4">
+            {{ task.completion_notes|linebreaks }}
+          </div>
+
+          {% if completion_files %}
+          <h6 class="mb-3"><i class="fas fa-paperclip me-2"></i>Files You Submitted:</h6>
+          <div class="document-list">
+            {% for file in completion_files %}
+            <div class="document-item">
+              <i class="fas fa-file-alt text-info"></i>
+              <span>{{ file.file_name }}</span>
+              <a href="{{ file.file.url }}" class="btn btn-sm btn-outline-primary" download>
+                <i class="fas fa-download me-1"></i>Download
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Deadline Card -->
+      {% if task.status != 'completed' %}
+      <div class="card shadow-lg mb-4 modern-card {% if task.is_overdue %}border-danger-highlight{% endif %}">
+        <div class="card-header {% if task.is_overdue %}bg-danger{% else %}bg-warning{% endif %} text-white">
+          <h6 class="mb-0"><i class="fas fa-hourglass-half me-2"></i>Deadline</h6>
+        </div>
+        <div class="card-body text-center p-4">
+          {% if task.is_overdue %}
+          <h2 class="text-danger mb-2"><i class="fas fa-exclamation-triangle"></i></h2>
+          <h4 class="text-danger">OVERDUE</h4>
+          <p class="mb-0 text-muted">This task is past its deadline!</p>
+          {% else %}
+          <h2 class="text-primary mb-2">{{ task.time_remaining }}</h2>
+          <p class="mb-0 text-muted">Time remaining</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Timeline Card -->
+      <div class="card shadow-lg mb-4 modern-card">
+        <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);">
+          <h6 class="mb-0"><i class="fas fa-history me-2"></i>Timeline</h6>
+        </div>
+        <div class="card-body">
+          <ul class="timeline-list">
+            <li class="timeline-item completed">
+              <i class="fas fa-check-circle"></i>
+              <div class="timeline-content">
+                <strong>Assigned</strong>
+                <small>{{ task.assigned_date|date:"d M Y, h:i A" }}</small>
+              </div>
+            </li>
+
+            {% if task.accepted_date %}
+            <li class="timeline-item completed">
+              <i class="fas fa-check-circle"></i>
+              <div class="timeline-content">
+                <strong>Accepted</strong>
+                <small>{{ task.accepted_date|date:"d M Y, h:i A" }}</small>
+              </div>
+            </li>
+            {% else %}
+            <li class="timeline-item pending">
+              <i class="fas fa-circle"></i>
+              <div class="timeline-content">
+                <strong>Accepted</strong>
+                <small class="text-muted">Not yet</small>
+              </div>
+            </li>
+            {% endif %}
+
+            {% if task.completed_date %}
+            <li class="timeline-item completed">
+              <i class="fas fa-check-circle"></i>
+              <div class="timeline-content">
+                <strong>Completed</strong>
+                <small>{{ task.completed_date|date:"d M Y, h:i A" }}</small>
+              </div>
+            </li>
+            {% else %}
+            <li class="timeline-item pending">
+              <i class="fas fa-circle"></i>
+              <div class="timeline-content">
+                <strong>Completed</strong>
+                <small class="text-muted">Pending</small>
+              </div>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+
+      <!-- Back Button -->
+      <a href="{% url 'my_assigned_tasks' %}" class="btn btn-secondary w-100 btn-nav">
+        <i class="fas fa-arrow-left me-2"></i>Back to My Tasks
+      </a>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+  {% if task.status == 'accepted' %}
+  const taskId = {{ task.id }};
+  const timerElement = $('.timer-display');
+  
+  function updateTimer() {
+    $.ajax({
+      url: `/tasks/ajax/timer/${taskId}/`,
+      method: 'GET',
+      success: function(response) {
+        if (response.success) {
+          timerElement.html(`${response.hours}h ${response.minutes}m`);
+        }
+      }
+    });
+  }
+  
+  updateTimer();
+  setInterval(updateTimer, 1000);
+  {% endif %}
+});
+</script>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .card-header.table-title-bar {
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    padding: 20px;
+    font-size: 18px;
+    border-bottom: 3px solid rgba(255,255,255,0.2);
+  }
+
+  .task-title {
+    color: #138496;
+    font-weight: 700;
+  }
+
+  .step-header h5 {
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .title-underline {
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(to right, #138496, #28a745);
+    border: none;
+    margin-top: 10px;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+  }
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .info-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+  }
+
+  .info-item i {
+    font-size: 20px;
+  }
+
+  .info-label {
+    font-weight: 600;
+    color: #555;
+    margin-right: 5px;
+  }
+
+  .info-value {
+    color: #333;
+    font-weight: 500;
+  }
+
+  .description-box {
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    border-left: 4px solid #138496;
+    line-height: 1.8;
+  }
+
+  .modern-badge {
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .badge-pending {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    color: white;
+  }
+
+  .badge-accepted {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .badge-completed {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+  }
+
+  .badge-urgent {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    color: white;
+  }
+
+  .badge-high {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    color: #333;
+  }
+
+  .badge-normal {
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .badge-low {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    color: white;
+  }
+
+  .badge-overdue {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    color: white;
+  }
+
+  .timer-display {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+  }
+
+  .time-highlight {
+    color: #28a745;
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .document-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .document-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .document-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+  }
+
+  .document-item i {
+    font-size: 24px;
+  }
+
+  .document-item span {
+    flex: 1;
+    font-weight: 600;
+  }
+
+  .border-danger-highlight {
+    border: 2px solid #dc3545 !important;
+  }
+
+  .timeline-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px 0;
+    border-left: 3px solid #e0e0e0;
+    padding-left: 25px;
+    position: relative;
+  }
+
+  .timeline-item i {
+    position: absolute;
+    left: -12px;
+    top: 15px;
+    font-size: 20px;
+    background: white;
+  }
+
+  .timeline-item.completed i {
+    color: #28a745;
+  }
+
+  .timeline-item.pending i {
+    color: #e0e0e0;
+  }
+
+  .timeline-content strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+  }
+
+  .timeline-content small {
+    color: #6c757d;
+  }
+
+  .btn-nav, .btn-action-accept, .btn-action-complete {
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-nav:hover, .btn-action-accept:hover, .btn-action-complete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+</style>
+{% endblock %}

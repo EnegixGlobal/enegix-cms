@@ -1,0 +1,404 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black;">
+  <div class="fw-bold fs-3">Salary History - All Employees</div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black">HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Salary History</span>
+  </div>
+</div>
+
+<!-- Filter Section -->
+<div class="container-fluid mt-2 mb-4">
+  <div class="card shadow">
+    <div class="card-header table-title-bar text-white">
+      <h5 class="mb-0">Filter Options</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-3">
+          <label><strong>Select Month</strong></label>
+          <input type="month" id="filterMonth" class="form-control" onchange="filterTable()">
+        </div>
+        <div class="col-md-3">
+          <label><strong>Employee Name</strong></label>
+          <input type="text" id="filterName" class="form-control" placeholder="Search by name..." onkeyup="filterTable()">
+        </div>
+        <!-- 🔥 NEW: Status filter -->
+        <div class="col-md-3">
+          <label><strong>Payment Status</strong></label>
+          <select id="filterStatus" class="form-control" onchange="filterTable()">
+            <option value="">All Status</option>
+            <option value="paid">Fully Paid</option>
+            <option value="partial">Partially Paid</option>
+            <option value="unpaid">Unpaid</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label><strong>&nbsp;</strong></label>
+          <button class="btn btn-secondary w-100" onclick="resetFilters()">
+            <i class="fas fa-redo me-2"></i>Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🔥 FIXED: Summary Cards -->
+<div class="container-fluid mb-4">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 bg-primary text-white">
+        <div class="card-body text-center">
+          <h6>Total Records</h6>
+          <h3 id="totalRecords">{{ salaries|length }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 bg-success text-white">
+        <div class="card-body text-center">
+          <h6>Total Gross Salary</h6>
+          <h3 id="totalGross">₹0</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 bg-info text-white">
+        <div class="card-body text-center">
+          <h6>Total Paid</h6>
+          <h3 id="totalPaid">₹0</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 bg-warning text-white">
+        <div class="card-body text-center">
+          <h6>Pending Balance</h6>
+          <h3 id="pendingBalance">₹0</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Salary History Table -->
+<div class="container-fluid">
+  <div class="card shadow-lg rounded-3 border-0">
+    <div class="card-header table-title-bar text-white d-flex justify-content-between align-items-center rounded-top">
+      <h5 class="mb-0">Saved Salary Records</h5>
+      <div>
+        <button class="btn btn-info btn-sm me-2" onclick="toggleAttendanceDetails()">
+          <i class="fas fa-calendar-check me-2"></i>Toggle Attendance
+        </button>
+        <button class="btn btn-success btn-sm" onclick="exportToExcel()">
+          <i class="fas fa-file-excel me-2"></i>Export Excel
+        </button>
+      </div>
+    </div>
+
+    <div class="card-body p-0" style="overflow-x:auto;">
+      <table class="table table-bordered table-hover align-middle text-center mb-0" id="historyTable">
+        <thead class="text-white">
+          <tr>
+            <th rowspan="2">S.No</th>
+            <th rowspan="2">Salary ID</th>
+            <th rowspan="2">Month/Year</th>
+            <th rowspan="2">Emp ID</th>
+            <th rowspan="2">Employee Name</th>
+            <th rowspan="2">Base Salary</th>
+            <th colspan="7" class="bg-info">Attendance Summary</th>
+            <th rowspan="2">Gross Salary</th>
+            <th rowspan="2">Total Deductions</th>
+            <th rowspan="2">Net Payable</th>
+            <th rowspan="2">Paid Amount</th>
+            <th rowspan="2">Remaining Balance</th>
+            <th rowspan="2">Payment Date</th>
+            <th rowspan="2">Actions</th>
+          </tr>
+          <tr>
+            <!-- 🔥 NEW: Attendance columns -->
+            <th class="bg-info">Present</th>
+            <th class="bg-info">Absent</th>
+            <th class="bg-info">Half Day</th>
+            <th class="bg-info">Leave</th>
+            <th class="bg-info">Holiday</th>
+            <th class="bg-info">LWP</th>
+            <th class="bg-info">Training</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if salaries %}
+            {% for salary in salaries %}
+            <tr data-month="{{ salary.year }}-{{ salary.month|stringformat:'02d' }}" 
+                data-name="{{ salary.employee_name|lower }}"
+                data-status="{% if salary.remaining_balance <= 0 %}paid{% elif salary.paid_amount > 0 %}partial{% else %}unpaid{% endif %}"
+                data-gross="{{ salary.gross_salary }}"
+                data-paid="{{ salary.paid_amount }}"
+                data-balance="{{ salary.remaining_balance }}">
+              <td>{{ forloop.counter }}</td>
+              <td>{{ salary.salary_id }}</td>
+              <td>{{ salary.month }}/{{ salary.year }}</td>
+              <td>{{ salary.employee_id_display }}</td>
+              <td>{{ salary.employee_name }}</td>
+              <td>₹{{ salary.base_salary|floatformat:2 }}</td>
+              
+              <!-- 🔥 NEW: Attendance summary columns -->
+              <td><span class="badge bg-success">{{ salary.total_present }}</span></td>
+              <td><span class="badge bg-danger">{{ salary.total_absent }}</span></td>
+              <td><span class="badge bg-warning text-dark">{{ salary.total_half_days }}</span></td>
+              <td><span class="badge bg-info">{{ salary.total_leaves }}</span></td>
+              <td><span class="badge bg-primary">{{ salary.total_holidays|default:0 }}</span></td>
+              <td><span class="badge bg-secondary">{{ salary.total_lwp|default:0 }}</span></td>
+              <td><span class="badge bg-warning">{{ salary.total_training|default:0 }}</span></td>
+              
+              <td>₹{{ salary.gross_salary|floatformat:2 }}</td>
+              <td>₹{{ salary.total_deductions|floatformat:2 }}</td>
+              <td class="fw-bold">₹{{ salary.net_payable|floatformat:2 }}</td>
+              <td>₹{{ salary.paid_amount|floatformat:2 }}</td>
+              <td class="fw-bold {% if salary.remaining_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                ₹{{ salary.remaining_balance|floatformat:2 }}
+              </td>
+              <td>{{ salary.payment_date|date:"d-M-Y"|default:"-" }}</td>
+              <td>
+                <a href="{% url 'view_salary_slip' salary.id %}" class="btn btn-sm btn-primary" target="_blank">
+                  <i class="fas fa-eye"></i> View
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="19">No salary records found</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 🔥 NEW: Attendance Details Section (Initially Hidden) -->
+<div id="attendanceDetailsSection" style="display: none;" class="container-fluid mt-4">
+  <div class="card shadow">
+    <div class="card-header bg-info text-white">
+      <h5 class="mb-0">Attendance Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-12">
+          <canvas id="attendanceChart" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let attendanceChart = null;
+
+// 🔥 FIXED: Calculate totals on page load
+document.addEventListener('DOMContentLoaded', function() {
+  calculateTotals();
+});
+
+function calculateTotals() {
+  const rows = document.querySelectorAll('#historyTable tbody tr[data-month]');
+  let totalGross = 0;
+  let totalPaid = 0;
+  let pendingBalance = 0;
+  
+  rows.forEach(row => {
+    if (row.style.display !== 'none') {
+      totalGross += parseFloat(row.getAttribute('data-gross'));
+      totalPaid += parseFloat(row.getAttribute('data-paid'));
+      pendingBalance += parseFloat(row.getAttribute('data-balance'));
+    }
+  });
+  
+  document.getElementById('totalGross').textContent = '₹' + totalGross.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  document.getElementById('totalPaid').textContent = '₹' + totalPaid.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  document.getElementById('pendingBalance').textContent = '₹' + pendingBalance.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function filterTable() {
+  const monthFilter = document.getElementById('filterMonth').value;
+  const nameFilter = document.getElementById('filterName').value.toLowerCase();
+  const statusFilter = document.getElementById('filterStatus').value;
+  const rows = document.querySelectorAll('#historyTable tbody tr[data-month]');
+
+  rows.forEach(row => {
+    const rowMonth = row.getAttribute('data-month');
+    const rowName = row.getAttribute('data-name');
+    const rowStatus = row.getAttribute('data-status');
+    
+    let showRow = true;
+
+    if (monthFilter && rowMonth !== monthFilter) {
+      showRow = false;
+    }
+
+    if (nameFilter && !rowName.includes(nameFilter)) {
+      showRow = false;
+    }
+
+    if (statusFilter && rowStatus !== statusFilter) {
+      showRow = false;
+    }
+
+    row.style.display = showRow ? '' : 'none';
+  });
+  
+  // 🔥 FIXED: Recalculate totals after filtering
+  calculateTotals();
+}
+
+function resetFilters() {
+  document.getElementById('filterMonth').value = '';
+  document.getElementById('filterName').value = '';
+  document.getElementById('filterStatus').value = '';
+  filterTable();
+}
+
+function exportToExcel() {
+  const table = document.getElementById('historyTable');
+  const wb = XLSX.utils.table_to_book(table, {sheet: "Salary History"});
+  XLSX.writeFile(wb, `Salary_History_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+// 🔥 NEW: Toggle attendance details
+function toggleAttendanceDetails() {
+  const section = document.getElementById('attendanceDetailsSection');
+  if (section.style.display === 'none') {
+    section.style.display = 'block';
+    loadAttendanceChart();
+  } else {
+    section.style.display = 'none';
+  }
+}
+
+// 🔥 NEW: Load attendance chart
+function loadAttendanceChart() {
+  const ctx = document.getElementById('attendanceChart').getContext('2d');
+  
+  // Get salary data from the table
+  const rows = document.querySelectorAll('#historyTable tbody tr[data-month]');
+  const labels = [];
+  const presentData = [];
+  const absentData = [];
+  const leaveData = [];
+  const holidayData = [];
+  const lwpData = [];
+  const trainingData = [];
+  
+  rows.forEach(row => {
+    if (row.style.display !== 'none') {
+      const cells = row.querySelectorAll('td');
+      labels.push(cells[4].textContent); // Employee name
+      presentData.push(parseInt(cells[7].textContent));
+      absentData.push(parseInt(cells[8].textContent));
+      leaveData.push(parseInt(cells[10].textContent));
+      holidayData.push(parseInt(cells[11].textContent));
+      lwpData.push(parseInt(cells[12].textContent));
+      trainingData.push(parseInt(cells[13].textContent));
+    }
+  });
+  
+  // Destroy existing chart if it exists
+  if (attendanceChart) {
+    attendanceChart.destroy();
+  }
+  
+  // Create new chart
+  attendanceChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Present',
+          data: presentData,
+          backgroundColor: 'rgba(40, 167, 69, 0.7)',
+        },
+        {
+          label: 'Absent',
+          data: absentData,
+          backgroundColor: 'rgba(220, 53, 69, 0.7)',
+        },
+        {
+          label: 'Leave',
+          data: leaveData,
+          backgroundColor: 'rgba(23, 162, 184, 0.7)',
+        },
+        {
+          label: 'Holiday',
+          data: holidayData,
+          backgroundColor: 'rgba(102, 16, 242, 0.7)',
+        },
+        {
+          label: 'LWP',
+          data: lwpData,
+          backgroundColor: 'rgba(108, 117, 125, 0.7)',
+        },
+        {
+          label: 'Training',
+          data: trainingData,
+          backgroundColor: 'rgba(255, 193, 7, 0.7)',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          stacked: true,
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+</script>
+
+<style>
+  .form-control {
+    border: 1.5px solid #444 !important;
+  }
+  .form-control:focus {
+    border-color: #222 !important;
+    background-color: #f0f0f0 !important;
+  }
+  table.table th, table.table td {
+    font-size: 13px;
+    padding: 10px !important;
+    vertical-align: middle;
+  }
+  table.table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+  }
+  table.table tbody tr:hover {
+    background-color: #eaf2f8;
+  }
+  
+  /* 🔥 NEW: Badge styling */
+  .badge {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+</style>
+
+{% endblock %}

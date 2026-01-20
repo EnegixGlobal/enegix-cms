@@ -1,0 +1,360 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}All Transactions{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-list-alt me-3 fs-2" style="color: #0152a4;"></i>
+    <div class="fw-bold fs-3">All Fund Transactions</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black">Finance</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Transactions</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <!-- Filter Section -->
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header bg-primary text-white fw-bold">
+      <i class="fas fa-filter me-2"></i>Filter Transactions
+    </div>
+    <div class="card-body">
+      <form method="GET" action="{% url 'all_transactions' %}" id="filterForm">
+        <div class="row">
+          <div class="col-md-3">
+            <label class="form-label"><strong>Transaction Type</strong></label>
+            <select class="form-control modern-input" name="type" id="typeFilter">
+              <option value="">All Types</option>
+              <option value="initial_deposit" {% if request.GET.type == 'initial_deposit' %}selected{% endif %}>Initial Deposit</option>
+              <option value="client_payment" {% if request.GET.type == 'client_payment' %}selected{% endif %}>Client Payment</option>
+              <option value="salary_payment" {% if request.GET.type == 'salary_payment' %}selected{% endif %}>Salary Payment</option>
+              <option value="adjustment" {% if request.GET.type == 'adjustment' %}selected{% endif %}>Adjustment</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label"><strong>From Date</strong></label>
+            <input type="date" class="form-control modern-input" name="date_from" value="{{ request.GET.date_from }}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label"><strong>To Date</strong></label>
+            <input type="date" class="form-control modern-input" name="date_to" value="{{ request.GET.date_to }}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label"><strong>&nbsp;</strong></label>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="fas fa-search me-2"></i>Apply Filter
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Transactions Table -->
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar fw-bold text-white d-flex justify-content-between align-items-center">
+      <span><i class="fas fa-receipt me-2"></i>Transaction History ({{ transactions.paginator.count }} total)</span>
+      <a href="{% url 'financial_dashboard' %}" class="btn btn-light btn-sm">
+        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+      </a>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover modern-table mb-0">
+          <thead>
+            <tr>
+              <th><i class="fas fa-hashtag me-2"></i>S.No</th>
+              <th><i class="fas fa-id-badge me-2"></i>Transaction ID</th>
+              <th><i class="fas fa-calendar-alt me-2"></i>Date & Time</th>
+              <th><i class="fas fa-tag me-2"></i>Type</th>
+              <th><i class="fas fa-rupee-sign me-2"></i>Amount</th>
+              <th><i class="fas fa-wallet me-2"></i>Balance After</th>
+              <th><i class="fas fa-align-left me-2"></i>Description</th>
+              <th><i class="fas fa-user me-2"></i>Created By</th>
+              <th><i class="fas fa-link me-2"></i>Related</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for txn in transactions %}
+            <tr class="table-row-hover">
+              <td><span class="serial-number">{{ transactions.start_index|add:forloop.counter0 }}</span></td>
+              <td><strong class="txn-id">{{ txn.transaction_id }}</strong></td>
+              <td>
+                <strong>{{ txn.transaction_date|date:"d M Y" }}</strong><br>
+                <small class="text-muted">{{ txn.transaction_date|date:"h:i A" }}</small>
+              </td>
+              <td>
+                <span class="badge modern-badge badge-type-{{ txn.transaction_type }}">
+                  {% if txn.transaction_type == 'initial_deposit' %}
+                  <i class="fas fa-plus-circle me-1"></i>Initial Deposit
+                  {% elif txn.transaction_type == 'client_payment' %}
+                  <i class="fas fa-arrow-down me-1"></i>Client Payment
+                  {% elif txn.transaction_type == 'salary_payment' %}
+                  <i class="fas fa-arrow-up me-1"></i>Salary Payment
+                  {% else %}
+                  <i class="fas fa-edit me-1"></i>Adjustment
+                  {% endif %}
+                </span>
+              </td>
+              <td>
+                <strong class="amount {% if txn.is_credit %}text-success{% else %}text-danger{% endif %}">
+                  {{ txn.is_credit|yesno:"+,-" }}₹{{ txn.amount|floatformat:2 }}
+                </strong>
+              </td>
+              <td><strong>₹{{ txn.balance_after|floatformat:2 }}</strong></td>
+              <td>{{ txn.description }}</td>
+              <td>
+                <div class="created-by">
+                  <strong>{{ txn.created_by_name }}</strong>
+                  <small class="text-muted d-block">{{ txn.created_by_role|upper }}</small>
+                </div>
+              </td>
+              <td>
+                {% if txn.project %}
+                <a href="{% url 'project_detail' txn.project.id %}" class="btn btn-sm btn-info" target="_blank">
+                  <i class="fas fa-project-diagram me-1"></i>{{ txn.project.project_id }}
+                </a>
+                {% elif txn.salary %}
+                <a href="{% url 'view_salary_slip' txn.salary.id %}" class="btn btn-sm btn-warning" target="_blank">
+                  <i class="fas fa-file-invoice-dollar me-1"></i>{{ txn.salary.salary_id }}
+                </a>
+                {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="text-center py-5 text-muted">
+                <i class="fas fa-inbox fa-3x mb-3"></i>
+                <p>No transactions found</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if transactions.has_other_pages %}
+  <div class="pagination-wrapper">
+    <div class="pagination-info">
+      <span class="text-muted">
+        <i class="fas fa-info-circle me-2"></i>
+        Showing <strong>{{ transactions.start_index }}</strong> to <strong>{{ transactions.end_index }}</strong> of <strong>{{ transactions.paginator.count }}</strong> transactions
+      </span>
+    </div>
+    
+    <nav aria-label="Page navigation">
+      <ul class="pagination modern-pagination">
+        {% if transactions.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">
+            <i class="fas fa-angle-double-left"></i>
+          </a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ transactions.previous_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">
+            <i class="fas fa-angle-left"></i>
+          </a>
+        </li>
+        {% endif %}
+
+        {% for num in transactions.paginator.page_range %}
+          {% if transactions.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num > transactions.number|add:'-3' and num < transactions.number|add:'3' %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ num }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if transactions.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ transactions.next_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">
+            <i class="fas fa-angle-right"></i>
+          </a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ transactions.paginator.num_pages }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">
+            <i class="fas fa-angle-double-right"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .modern-input {
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+  }
+
+  .modern-input:focus {
+    border-color: #0152a4 !important;
+    background-color: #f8f9ff !important;
+    box-shadow: 0 0 0 0.2rem rgba(1, 82, 164, 0.15);
+  }
+
+  .modern-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .modern-table thead tr {
+    background: linear-gradient(135deg, #0152a4 0%, #0168cc 100%);
+    color: white;
+  }
+
+  .modern-table thead th {
+    padding: 15px;
+    font-weight: 600;
+    border: none;
+    vertical-align: middle;
+    font-size: 14px;
+  }
+
+  .modern-table tbody td {
+    padding: 12px 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 13px;
+  }
+
+  .table-row-hover {
+    transition: all 0.3s ease;
+  }
+
+  .table-row-hover:hover {
+    background: linear-gradient(135deg, #f8f9ff 0%, #e9ecef 100%);
+    transform: scale(1.005);
+  }
+
+  .serial-number {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #0152a4 0%, #0168cc 100%);
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 30px;
+    font-weight: bold;
+    font-size: 12px;
+  }
+
+  .txn-id {
+    color: #0152a4;
+    font-size: 13px;
+  }
+
+  .amount {
+    font-size: 15px;
+  }
+
+  .created-by {
+    line-height: 1.2;
+  }
+
+  .modern-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .badge-type-initial_deposit {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+
+  .badge-type-client_payment {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+  }
+
+  .badge-type-salary_payment {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    color: white;
+  }
+
+  .badge-type-adjustment {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    color: black;
+  }
+
+  .card-header.table-title-bar {
+    padding: 20px;
+    font-size: 18px;
+  }
+
+  .pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .modern-pagination {
+    margin: 0;
+    gap: 5px;
+    display: flex;
+  }
+
+  .modern-pagination .page-link {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 10px 15px;
+    color: #0152a4;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: white;
+  }
+
+  .modern-pagination .page-link:hover {
+    background: linear-gradient(135deg, #0152a4 0%, #0168cc 100%);
+    color: white;
+    border-color: #0152a4;
+    transform: translateY(-2px);
+  }
+
+  .modern-pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #0152a4 0%, #0168cc 100%);
+    border-color: #0152a4;
+    color: white;
+  }
+</style>
+{% endblock %}

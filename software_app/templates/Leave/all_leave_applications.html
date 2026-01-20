@@ -1,0 +1,236 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}All Leave Applications{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-list-ul me-3 fs-3"></i>
+    <div>
+      <div class="fw-bold fs-3">All Leave Applications</div>
+      <small class="text-muted">View and manage all employee leave requests</small>
+    </div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black">HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">All Leaves</span>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header table-title-bar text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-filter me-2"></i>Leave Applications
+          </h5>
+          <div>
+            <a href="{% url 'pending_leave_requests' %}" class="btn btn-warning btn-sm me-2">
+              <i class="fas fa-clock me-2"></i>Pending Requests
+            </a>
+          </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="card-body border-bottom bg-light">
+          <form method="GET" class="row g-3" id="filterForm">
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Employee</label>
+              <select name="employee" class="form-control" onchange="document.getElementById('filterForm').submit()">
+                <option value="">-- All Employees --</option>
+                {% for emp in employees %}
+                  <option value="{{ emp.id }}" {% if request.GET.employee == emp.id|stringformat:"s" %}selected{% endif %}>
+                    {{ emp.employee_id }} - {{ emp.full_name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Status</label>
+              <select name="status" class="form-control" onchange="document.getElementById('filterForm').submit()">
+                <option value="">-- All Status --</option>
+                <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Approved</option>
+                <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Rejected</option>
+              </select>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Month</label>
+              <input type="month" name="month" class="form-control" value="{{ request.GET.month }}" onchange="document.getElementById('filterForm').submit()">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label fw-bold">&nbsp;</label>
+              <div class="d-grid">
+                <a href="{% url 'all_leave_applications' %}" class="btn btn-secondary">
+                  <i class="fas fa-redo me-2"></i>Reset Filters
+                </a>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="card-body p-0">
+          {% if applications %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="bg-dark text-white">
+                <tr>
+                  <th class="px-4 py-3">Leave ID</th>
+                  <th class="px-4 py-3">Employee</th>
+                  <th class="px-4 py-3">Type</th>
+                  <th class="px-4 py-3">From Date</th>
+                  <th class="px-4 py-3">To Date</th>
+                  <th class="px-4 py-3">Days</th>
+                  <th class="px-4 py-3">Deducted</th>
+                  <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">Applied On</th>
+                  <th class="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for app in applications %}
+                <tr>
+                  <td class="px-4 py-3">
+                    <strong class="text-primary">{{ app.leave_id }}</strong>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div>
+                      <strong>{{ app.employee_name }}</strong>
+                      <br>
+                      <small class="text-muted">{{ app.employee_id_display }}</small>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    {% if app.leave_type == 'casual' %}
+                      <span class="badge bg-success">Casual</span>
+                    {% elif app.leave_type == 'sick' %}
+                      <span class="badge bg-info">Sick</span>
+                    {% elif app.leave_type == 'combined' %}
+                      <span class="badge bg-warning text-dark">Combined</span>
+                      <br>
+                      <small class="text-muted">
+                        C:{{ app.casual_days_requested|floatformat:1 }} + 
+                        S:{{ app.sick_days_requested|floatformat:1 }}
+                      </small>
+                    {% else %}
+                      <span class="badge bg-secondary">Unpaid</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3">{{ app.from_date|date:"d M Y" }}</td>
+                  <td class="px-4 py-3">{{ app.to_date|date:"d M Y" }}</td>
+                  <td class="px-4 py-3">
+                    <strong>{{ app.total_days|floatformat:1 }}</strong>
+                  </td>
+                  <td class="px-4 py-3">
+                    {% if app.status == 'approved' %}
+                      <small class="text-success">
+                        C: {{ app.casual_days_deducted|floatformat:1 }}<br>
+                        S: {{ app.sick_days_deducted|floatformat:1 }}
+                      </small>
+                      {% if app.refund_processed %}
+                        <br><span class="badge bg-info">Refunded</span>
+                      {% endif %}
+                    {% else %}
+                      <small class="text-muted">-</small>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3">
+                    {% if app.status == 'pending' %}
+                      <span class="badge bg-warning text-dark">
+                        <i class="fas fa-clock me-1"></i>Pending
+                      </span>
+                    {% elif app.status == 'approved' %}
+                      <span class="badge bg-success">
+                        <i class="fas fa-check-circle me-1"></i>Approved
+                      </span>
+                    {% elif app.status == 'rejected' %}
+                      <span class="badge bg-danger">
+                        <i class="fas fa-times-circle me-1"></i>Rejected
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3">
+                    <small>{{ app.applied_date|date:"d M Y" }}</small>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="btn-group" role="group">
+                      <a href="{% url 'view_leave_detail' app.id %}" 
+                         class="btn btn-sm btn-info" 
+                         title="View Details">
+                        <i class="fas fa-eye"></i>
+                      </a>
+                      
+                      {% if app.status == 'pending' %}
+                      <a href="{% url 'approve_reject_leave' app.id %}" 
+                         class="btn btn-sm btn-primary" 
+                         title="Review">
+                        <i class="fas fa-check-circle"></i>
+                      </a>
+                      {% endif %}
+
+                      {% if app.status == 'approved' and not app.refund_processed %}
+                      <a href="{% url 'refund_leave' app.id %}" 
+                         class="btn btn-sm btn-warning" 
+                         title="Process Refund">
+                        <i class="fas fa-undo"></i>
+                      </a>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                
+                <!-- HR Remarks Row -->
+                {% if app.hr_remarks and app.status != 'pending' %}
+                <tr class="bg-light">
+                  <td colspan="10" class="px-4 py-2">
+                    <div class="d-flex align-items-start">
+                      <i class="fas fa-comment-dots text-muted me-2 mt-1"></i>
+                      <div>
+                        <strong class="text-muted">HR Remarks:</strong>
+                        <p class="mb-0 ms-2">{{ app.hr_remarks }}</p>
+                        <small class="text-muted">
+                          by {{ app.approved_by_name }} on {{ app.approval_date|date:"d M Y, g:i A" }}
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {% else %}
+          <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No Leave Applications Found</h5>
+            <p class="text-muted">No applications match your filter criteria.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.form-control {
+  border: 1.5px solid #444 !important;
+}
+.form-control:focus {
+  border-color: #222 !important;
+  background-color: #f8f8f8 !important;
+}
+.table tbody tr:hover {
+  background-color: #f8f9fa !important;
+}
+</style>
+
+{% endblock %}

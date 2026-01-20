@@ -1,0 +1,670 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}Project Details - {{ project.project_id }}{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-project-diagram me-3 fs-2" style="color: #0152a4;"></i>
+    <div class="fw-bold fs-3">Project Details</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">{{ project.project_id }} - {{ project.project_name }}</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <!-- Project Information Card -->
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar d-flex justify-content-between align-items-center">
+      <span class="fw-bold text-white"><i class="fas fa-info-circle me-2"></i>Project Information</span>
+      <div>
+        {% if show_sensitive_data %}
+        <a href="{% url 'record_client_payment' project.id %}" class="btn btn-success btn-add-new me-2">
+          <i class="fas fa-money-bill-wave me-2"></i>Record Payment
+        </a>
+        <a href="{% url 'project_financial_detail' project.id %}" class="btn btn-info btn-add-new me-2">
+          <i class="fas fa-receipt me-2"></i>Payment History
+        </a>
+        {% endif %}
+        <a href="{% url 'project_list' %}" class="btn btn-light btn-add-new">
+          <i class="fas fa-arrow-left me-2"></i>Back to Projects
+        </a>
+      </div>
+    </div>
+    <div class="card-body p-4">
+      <div class="row mb-4">
+        <div class="col-md-3 text-center">
+          <div class="project-icon-section">
+            <div class="project-icon">
+              {% if project.project_type == 'seo' %}
+              <i class="fas fa-search"></i>
+              {% else %}
+              <i class="fas fa-code"></i>
+              {% endif %}
+            </div>
+            <div class="mt-3">
+              {% if project.status == 'pending' %}
+              <span class="badge modern-badge badge-pending">
+                <i class="fas fa-clock me-1"></i>Pending
+              </span>
+              {% elif project.status == 'in_progress' %}
+              <span class="badge modern-badge badge-in-progress">
+                <i class="fas fa-spinner me-1"></i>In Progress
+              </span>
+              {% elif project.status == 'completed' %}
+              <span class="badge modern-badge badge-completed">
+                <i class="fas fa-check-circle me-1"></i>Completed
+              </span>
+              {% else %}
+              <span class="badge modern-badge badge-on-hold">
+                <i class="fas fa-pause-circle me-1"></i>On Hold
+              </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-9">
+          <h4 class="mb-3">{{ project.project_id }} - {{ project.project_name }}</h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <i class="fas fa-list text-primary"></i>
+              <span class="info-label">Type:</span>
+              <span class="info-value">
+                {% if project.project_type == 'seo' %}
+                <span class="badge modern-badge badge-type-seo">
+                  <i class="fas fa-search me-1" style="font-size: 8px;"></i>SEO
+                </span>
+                {% else %}
+                <span class="badge modern-badge badge-type-development">
+                  <i class="fas fa-code me-1" style="font-size: 8px;"></i>Development
+                </span>
+                {% endif %}
+              </span>
+            </div>
+            
+            <!-- RESTRICTED: Only Admin/Super Admin can see client details -->
+            {% if show_sensitive_data %}
+            <div class="info-item">
+              <i class="fas fa-building text-primary"></i>
+              <span class="info-label">Client:</span>
+              <span class="info-value">{{ project.client.company_name }} ({{ project.client.client_id }})</span>
+            </div>
+            {% endif %}
+            
+            <div class="info-item">
+              <i class="fas fa-calendar-alt text-primary"></i>
+              <span class="info-label">Start Date:</span>
+              <span class="info-value">{{ project.start_date }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-calendar-check text-primary"></i>
+              <span class="info-label">Deadline:</span>
+              <span class="info-value">{{ project.deadline }}</span>
+            </div>
+            
+            <!-- RESTRICTED: Only Admin/Super Admin can see budget -->
+            {% if show_sensitive_data %}
+            <div class="info-item">
+              <i class="fas fa-calculator text-primary"></i>
+              <span class="info-label">Budget:</span>
+              <span class="info-value">
+                {% if project.budget %}
+                ₹{{ project.budget|floatformat:2 }}
+                {% else %}
+                <span class="text-muted">Not specified</span>
+                {% endif %}
+              </span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-user text-primary"></i>
+              <span class="info-label">Created By:</span>
+              <span class="info-value">{{ project.created_by_name }} ({{ project.created_by_role }})</span>
+            </div>
+            {% endif %}
+            
+            <div class="info-item">
+              <i class="fas fa-clock text-primary"></i>
+              <span class="info-label">Created At:</span>
+              <span class="info-value">{{ project.created_at|date:"d M Y, h:i A" }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-sync text-primary"></i>
+              <span class="info-label">Last Updated:</span>
+              <span class="info-value">{{ project.updated_at|date:"d M Y, h:i A" }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🔥 NEW: Financial Overview (Admin/Super Admin Only) -->
+      {% if show_sensitive_data %}
+      <hr class="my-4">
+      <div class="section-header">
+        <i class="fas fa-dollar-sign me-2 text-success"></i>
+        <h5>Financial Overview</h5>
+      </div>
+      <div class="financial-overview-box mt-3">
+        <div class="row">
+          <div class="col-md-3">
+            <div class="financial-item">
+              <i class="fas fa-money-bill-wave text-primary"></i>
+              <div class="financial-details">
+                <small class="text-muted">Total Amount</small>
+                <h5 class="mb-0">₹{{ project.total_amount|floatformat:2 }}</h5>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="financial-item">
+              <i class="fas fa-check-circle text-success"></i>
+              <div class="financial-details">
+                <small class="text-muted">Amount Received</small>
+                <h5 class="mb-0 text-success">₹{{ project.amount_received|floatformat:2 }}</h5>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="financial-item">
+              <i class="fas fa-hourglass-half text-warning"></i>
+              <div class="financial-details">
+                <small class="text-muted">Amount Pending</small>
+                <h5 class="mb-0 text-warning">₹{{ project.amount_pending|floatformat:2 }}</h5>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="financial-item">
+              <i class="fas fa-chart-pie text-info"></i>
+              <div class="financial-details">
+                <small class="text-muted">Payment Status</small>
+                <h5 class="mb-0">
+                  {% if project.payment_status == 'paid' %}
+                  <span class="badge bg-success">Fully Paid</span>
+                  {% elif project.payment_status == 'partial' %}
+                  <span class="badge bg-warning">Partially Paid</span>
+                  {% else %}
+                  <span class="badge bg-danger">Unpaid</span>
+                  {% endif %}
+                </h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <hr class="my-4">
+
+      <div class="section-header">
+        <i class="fas fa-align-left me-2 text-primary"></i>
+        <h5>Description</h5>
+      </div>
+      <div class="description-box">
+        <p class="text-muted">{{ project.description }}</p>
+      </div>
+
+      <!-- Documents section -->
+      {% if project.module_file or show_sensitive_data and project.agreement %}
+      <hr class="my-4">
+      <div class="section-header">
+        <i class="fas fa-paperclip me-2 text-primary"></i>
+        <h5>Project Documents</h5>
+      </div>
+      <div class="row mt-3">
+        
+        <!-- RESTRICTED: Agreement Document is only visible to Admins/Super Admins -->
+        {% if show_sensitive_data and project.agreement %}
+        <div class="col-md-6 mb-3">
+          <div class="document-card">
+            <div class="document-icon">
+              <i class="fas fa-file-contract"></i>
+            </div>
+            <div class="document-info">
+              <h6>Agreement Document</h6>
+              <small class="text-muted">{{ project.agreement.name|default:"agreement.pdf" }}</small>
+            </div>
+            <a href="{{ project.agreement.url }}" target="_blank" class="btn btn-sm btn-download" title="Download Document">
+              <i class="fas fa-download"></i>
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Module/Resource File is visible to all, and download is allowed for all -->
+        {% if project.module_file %}
+        <div class="col-md-6 mb-3">
+          <div class="document-card">
+            <div class="document-icon">
+              <i class="fas fa-file-archive"></i>
+            </div>
+            <div class="document-info">
+              <h6>Module/Resource File</h6>
+              <small class="text-muted">{{ project.module_file.name|default:"module.zip" }}</small>
+            </div>
+            <a href="{{ project.module_file.url }}" target="_blank" class="btn btn-sm btn-download" title="Download Document">
+              <i class="fas fa-download"></i>
+            </a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- Assigned Team Members -->
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar d-flex justify-content-between align-items-center">
+      <span class="fw-bold text-white"><i class="fas fa-users me-2"></i>Assigned Team Members</span>
+      {% if show_sensitive_data %}
+      <a href="{% url 'assign_project' %}" class="btn btn-light btn-add-new">
+        <i class="fas fa-plus-circle me-2"></i>Assign New Member
+      </a>
+      {% endif %}
+    </div>
+    <div class="card-body p-4">
+      <div class="table-responsive">
+        <table class="table table-hover modern-table">
+          <thead>
+            <tr>
+              <th><i class="fas fa-id-badge me-2"></i>Employee ID</th>
+              <th><i class="fas fa-user me-2"></i>Name</th>
+              <th><i class="fas fa-user-tag me-2"></i>Role</th>
+              <th><i class="fas fa-briefcase me-2"></i>Designation</th>
+              <th><i class="fas fa-calendar-alt me-2"></i>Assigned Date</th>
+              {% if show_sensitive_data %}
+              <th><i class="fas fa-user-plus me-2"></i>Assigned By</th>
+              <th><i class="fas fa-sticky-note me-2"></i>Notes</th>
+              <th><i class="fas fa-cogs me-2"></i>Action</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for assignment in assignments %}
+            <tr class="table-row-hover">
+              <td><strong class="employee-id">{{ assignment.employees_id }}</strong></td>
+              <td><strong>{{ assignment.employee_name }}</strong></td>
+              <td>
+                <span class="badge modern-badge badge-role-{{ assignment.employee_role }}">
+                  <i class="fas fa-circle me-1" style="font-size: 8px;"></i>{{ assignment.employee_role|title }}
+                </span>
+              </td>
+              <td>{{ assignment.employee_designation }}</td>
+              <td>{{ assignment.assigned_date }}</td>
+              {% if show_sensitive_data %}
+              <td>
+                <div class="assigned-by">
+                  <strong>{{ assignment.assigned_by_name }}</strong>
+                  <small class="text-muted d-block">{{ assignment.assigned_by_role }}</small>
+                </div>
+              </td>
+              <td>
+                {% if assignment.notes %}
+                {{ assignment.notes|truncatewords:10 }}
+                {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="POST" action="{% url 'remove_assignment' assignment.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-action btn-danger" onclick="return confirm('Remove this assignment?')" title="Remove Assignment">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </form>
+              </td>
+              {% endif %}
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="{% if show_sensitive_data %}8{% else %}5{% endif %}" class="text-center text-muted py-5">
+                <i class="fas fa-users fa-3x mb-3 text-muted"></i>
+                <p>No team members assigned yet</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .btn-add-new {
+    padding: 10px 25px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: white;
+    color: #0152a4;
+    border: 2px solid white;
+  }
+
+  .btn-add-new:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255,255,255,0.3);
+    background: #f8f9fa;
+  }
+
+  .btn-success.btn-add-new {
+    color: white;
+    background: #28a745;
+  }
+
+  .btn-info.btn-add-new {
+    color: white;
+    background: #17a2b8;
+  }
+
+  .project-icon-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .project-icon {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #0152a4 0%, #0168cc 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    box-shadow: 0 5px 20px rgba(1, 82, 164, 0.3);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .section-header h5 {
+    margin: 0;
+    color: #333;
+    font-weight: 700;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+  }
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .info-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+  }
+
+  .info-item i {
+    font-size: 18px;
+  }
+
+  .info-label {
+    font-weight: 600;
+    color: #555;
+  }
+
+  .info-value {
+    color: #333;
+  }
+
+  /* 🔥 NEW: Financial Overview Box */
+  .financial-overview-box {
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    border: 2px solid #dee2e6;
+  }
+
+  .financial-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+  }
+
+  .financial-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  }
+
+  .financial-item i {
+    font-size: 32px;
+  }
+
+  .financial-details {
+    flex: 1;
+  }
+
+  .financial-details small {
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .description-box {
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    border: 2px solid #dee2e6;
+  }
+
+  .modern-alert {
+    border-radius: 10px;
+    border-left: 5px solid #17a2b8;
+    background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
+    padding: 15px;
+  }
+
+  .document-card {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+  }
+
+  .document-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+
+  .document-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #0152a4 0%, #0168cc 100%);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-right: 15px;
+  }
+
+  .document-info {
+    flex: 1;
+  }
+
+  .document-info h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .btn-download {
+    background: #28a745;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-download:hover {
+    background: #218838;
+    transform: scale(1.1);
+    color: white;
+  }
+
+  .modern-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .modern-table thead tr {
+    background: linear-gradient(135deg, #0152a4 0%, #0168cc 100%);
+    color: white;
+  }
+
+  .modern-table thead th {
+    padding: 15px;
+    font-weight: 600;
+    border: none;
+    vertical-align: middle;
+  }
+
+  .modern-table tbody td {
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .table-row-hover {
+    transition: all 0.3s ease;
+  }
+
+  .table-row-hover:hover {
+    background: linear-gradient(135deg, #f8f9ff 0%, #e9ecef 100%);
+    transform: scale(1.01);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  }
+
+  .employee-id {
+    color: #0152a4;
+    font-size: 14px;
+  }
+
+  .assigned-by {
+    line-height: 1.2;
+  }
+
+  .modern-badge {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s ease;
+  }
+
+  .badge-type-seo {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .badge-type-development {
+    background: linear-gradient(135deg, #007bff 0%, #0090ff 100%);
+    color: white;
+  }
+
+  .badge-pending {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    color: black;
+  }
+
+  .badge-in-progress {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .badge-completed {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+  }
+
+  .badge-on-hold {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    color: white;
+  }
+
+  .badge-role-hr {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .badge-role-sales {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+  }
+
+  .badge-role-developer {
+    background: linear-gradient(135deg, #007bff 0%, #0090ff 100%);
+    color: white;
+  }
+
+  .badge-role-seos {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    color: black;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 5px;
+  }
+
+  .btn-action {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.3s ease;
+  }
+
+  .btn-action:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+</style>
+{% endblock %}

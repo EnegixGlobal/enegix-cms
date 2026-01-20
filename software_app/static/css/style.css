@@ -1,0 +1,117 @@
+/* ===== General Body Styling ===== */
+body {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  transition: margin-left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* ===== Content Section ===== */
+.content {
+  flex: 1;
+  margin-left: 250px;
+  padding: 80px 20px 60px 20px; /* navbar + footer spacing */
+  transition: margin-left 0.3s ease;
+}
+
+body.collapsed-sidebar .content {
+  margin-left: 0;
+}
+
+
+
+/* ===== Sidebar ===== */
+.sidebar {
+  width: 250px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #343a40;
+  z-index: 1000;
+  padding-top: 60px; /* To avoid overlapping with fixed navbar */
+  transition: margin-left 0.3s ease;
+}
+
+body.collapsed-sidebar .sidebar {
+  margin-left: -250px;
+}
+
+.sidebar a {
+  display: block;
+  padding: 12px 20px;
+  color: white;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.sidebar a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Footer Styling ===== */
+.footer {
+  background-color: #cecece;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: 250px;
+}
+
+body.collapsed-sidebar .footer {
+  margin-left: 0;
+}
+
+/* Footer Brand Colors */
+.bright {
+  color: teal;
+}
+.code {
+  color: white;
+}
+
+/* ===== Navbar fixes ===== */
+.navbar {
+  z-index: 1100;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+/* ===== Navbar Dropdown Fix ===== */
+.navbar .dropdown-menu {
+  position: absolute !important;
+  top: 100% !important;    /* Navbar ke bilkul neeche khulega */
+  right: 0 !important;     /* Right align */
+  left: auto !important;   /* Left ka override */
+  margin-top: 0.25rem;     /* Thoda space */
+  z-index: 1200;           /* Nav ke upar visible rahe */
+}
+
+
+/* ===== Responsive Fixes ===== */
+@media (max-width: 768px) {
+  .content,
+  .footer {
+    margin-left: 0 !important;
+  }
+}
+
+.table-title-bar{
+ background-color:#008080;
+}

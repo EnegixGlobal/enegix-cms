@@ -1,0 +1,1299 @@
+{% load static %}
+
+<style>
+  .sidebar {
+    overflow-y: auto;
+    max-height: 100vh;
+  }
+
+  .sidebar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+  }
+
+  .accordion-button::after {
+    font-weight: 700 !important;
+    filter: brightness(0) invert(1);
+    transform: scale(1.3);
+    opacity: 0.9;
+  }
+
+  .sidebar-link:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    transform: translateX(5px);
+    transition: all 0.3s ease;
+  }
+
+  .sidebar-link.active {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    border-left: 3px solid #fff;
+    padding-left: 12px !important;
+  }
+</style>
+
+<div
+  id="sidebarMenu"
+  class="sidebar table-title-bar text-white position-fixed h-100"
+  style="top: 0; padding-top: 60px; width: 250px; transition: all 0.3s"
+>
+  <div class="accordion bg-transparent" id="sidebarAccordion">
+    <!-- ================= DASHBOARD (ALL ROLES) ================= -->
+    <a
+      href="{% url 'dashboard' %}"
+      class="d-block py-2 px-3 text-white text-decoration-none sidebar-link"
+    >
+      <i class="fas fa-home me-2"></i> Dashboard
+    </a>
+        
+    <hr class="bg-secondary my-2" />
+
+    <!-- <a
+      href="{% url 'my_profile' %}"
+      class="d-block py-2 px-3 text-white text-decoration-none sidebar-link"
+    >
+      <i class="fas fa-user-circle me-2"></i> My Profile
+    </a>
+    <hr class="bg-secondary my-2" /> -->
+
+    <!-- =====================================================
+         SUPER ADMIN ROLE - FULL ACCESS
+    ===================================================== -->
+    {% if request.session.role == 'super_admin' %}
+
+    <!-- Holiday Master -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseHolidaysSA"
+        >
+          <i class="fas fa-calendar-alt me-2"></i> Holiday Master
+        </button>
+      </h2>
+      <div id="collapseHolidaysSA" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'add_holiday' %}"
+          >
+            <i class="fas fa-plus-circle me-2"></i> Add Holiday
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'holiday_list' %}"
+          >
+            <i class="fas fa-list-ul me-2"></i> Holiday List
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'upcoming_holidays' %}"
+          >
+            <i class="fas fa-calendar-week me-2"></i> Upcoming Holidays
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employee Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseEmployeeSA"
+        >
+          <i class="fas fa-users me-2"></i> Employee Management
+        </button>
+      </h2>
+      <div id="collapseEmployeeSA" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'add_employee' %}"
+          >
+            <i class="fas fa-user-plus me-2"></i> Add Employee
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'employee_list' %}"
+          >
+            <i class="fas fa-list me-2"></i> Employee List
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task Assignment (Super Admin) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseTasksSA"
+        >
+          <i class="fas fa-tasks me-2"></i> Task Assignment
+        </button>
+      </h2>
+      <div id="collapseTasksSA" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'assign_task' %}"
+          >
+            <i class="fas fa-plus-circle me-2"></i> Assign Task
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'admin_task_list' %}"
+          >
+            <i class="fas fa-list-ul me-2"></i> All Tasks
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseSalesSA"
+        >
+          <i class="fas fa-handshake me-2"></i> Sales Management
+        </button>
+      </h2>
+      <div id="collapseSalesSA" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'add_client' %}"
+          >
+            <i class="fas fa-plus me-2"></i> Add Client
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'client_list' %}"
+          >
+            <i class="fas fa-list me-2"></i> Client List
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'interested_clients' %}"
+          >
+            <i class="fas fa-star me-2"></i> Interested Clients
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseProjectsSA"
+        >
+          <i class="fas fa-project-diagram me-2"></i> Project Management
+        </button>
+      </h2>
+      <div id="collapseProjectsSA" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'project_list' %}"
+          >
+            <i class="fas fa-list me-2"></i> Project List
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'assign_project' %}"
+          >
+            <i class="fas fa-user-plus me-2"></i> Assign Project
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseReportsSA"
+        >
+          <i class="fas fa-clipboard-list me-2"></i> Reports Management
+        </button>
+      </h2>
+      <div id="collapseReportsSA" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'all_work_reports' %}"
+          >
+            <i class="fas fa-list-ul me-2"></i> All Work Reports
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave & Attendance -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseLeaveSA"
+        >
+          <i class="fas fa-calendar-check me-2"></i> Leave & Attendance
+        </button>
+      </h2>
+      <div id="collapseLeaveSA" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'pending_leave_requests' %}"
+          >
+            <i class="fas fa-clock me-2"></i> Pending Leave Requests
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'all_leave_applications' %}"
+          >
+            <i class="fas fa-list-ul me-2"></i> All Leave Applications
+          </a>
+          <hr class="my-2 border-secondary" />
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'attendance_list' %}"
+          >
+            <i class="fas fa-table me-2"></i> Attendance Sheet
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salary Management (Super Admin) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseSalarySA"
+        >
+          <i class="fas fa-money-bill-wave me-2"></i> Salary Management
+        </button>
+      </h2>
+      <div id="collapseSalarySA" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'salary_sheet' %}"
+          >
+            <i class="fas fa-file-invoice-dollar me-2"></i> Salary Sheet
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'view_salary_history' %}"
+          >
+            <i class="fas fa-history me-2"></i> Salary History
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Finance Management (Super Admin) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseFinanceSA"
+        >
+          <i class="fas fa-chart-line me-2"></i> Finance Management
+        </button>
+      </h2>
+      <div id="collapseFinanceSA" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'financial_dashboard' %}"
+          >
+            <i class="fas fa-tachometer-alt me-2"></i> Financial Dashboard
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'initialize_company_funds' %}"
+          >
+            <i class="fas fa-wallet me-2"></i> Initialize Funds
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'all_transactions' %}"
+          >
+            <i class="fas fa-exchange-alt me-2"></i> All Transactions
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'add_expense' %}"
+          >
+            <i class="fas fa-circle-plus me-2"></i> Add Expenses
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'expense_list' %}"
+          >
+            <i class="fas fa-list-ul me-2"></i> Expense List
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
+
+    <!-- =====================================================
+         ADMIN ROLE
+    ===================================================== -->
+    {% if request.session.role == 'admin' %}
+
+    <!-- Holiday Master -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseHolidaysAD"
+        >
+          <i class="fas fa-calendar-alt me-2"></i> Holiday Master
+        </button>
+      </h2>
+      <div id="collapseHolidaysAD" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'upcoming_holidays' %}"
+          >
+            <i class="fas fa-calendar-week me-2"></i> Upcoming Holidays
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employee Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseEmployeeAD"
+        >
+          <i class="fas fa-users me-2"></i> Employee Management
+        </button>
+      </h2>
+      <div id="collapseEmployeeAD" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'add_employee' %}"
+          >
+            <i class="fas fa-user-plus me-2"></i> Add Employee
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'employee_list' %}"
+          >
+            <i class="fas fa-list me-2"></i> Employee List
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Tasks (Admin - Employee view) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseTasksAD"
+        >
+          <i class="fas fa-tasks me-2"></i> My Tasks
+        </button>
+      </h2>
+      <div id="collapseTasksAD" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_assigned_tasks' %}"
+          >
+            <i class="fas fa-list-ul me-2"></i> My Assigned Tasks
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseSalesAD"
+        >
+          <i class="fas fa-handshake me-2"></i> Sales Management
+        </button>
+      </h2>
+      <div id="collapseSalesAD" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'add_client' %}"
+          >
+            <i class="fas fa-plus me-2"></i> Add Client
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'client_list' %}"
+          >
+            <i class="fas fa-list me-2"></i> Client List
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'interested_clients' %}"
+          >
+            <i class="fas fa-star me-2"></i> Interested Clients
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseProjectsAD"
+        >
+          <i class="fas fa-project-diagram me-2"></i> Project Management
+        </button>
+      </h2>
+      <div id="collapseProjectsAD" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'project_list' %}"
+          >
+            <i class="fas fa-list me-2"></i> Project List
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'assign_project' %}"
+          >
+            <i class="fas fa-user-plus me-2"></i> Assign Project
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseReportsAD"
+        >
+          <i class="fas fa-clipboard-list me-2"></i> Reports Management
+        </button>
+      </h2>
+      <div id="collapseReportsAD" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'all_work_reports' %}"
+          >
+            <i class="fas fa-list-ul me-2"></i> All Work Reports
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave & Attendance -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseLeaveAD"
+        >
+          <i class="fas fa-calendar-check me-2"></i> Leave & Attendance
+        </button>
+      </h2>
+      <div id="collapseLeaveAD" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'apply_leave' %}"
+          >
+            <i class="fas fa-calendar-plus me-2"></i> Apply Leave
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_leave_applications' %}"
+          >
+            <i class="fas fa-file-alt me-2"></i> My Leave Applications
+          </a>
+          <hr class="my-2 border-secondary" />
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'punch_attendance' %}"
+          >
+            <i class="fas fa-fingerprint me-2"></i> Punch Attendance
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_attendance' %}"
+          >
+            <i class="fas fa-calendar-check me-2"></i> My Attendance
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salary Management (Admin) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseSalaryAD"
+        >
+          <i class="fas fa-money-bill-wave me-2"></i> Salary Management
+        </button>
+      </h2>
+      <div id="collapseSalaryAD" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_salary_slips' %}"
+          >
+            <i class="fas fa-receipt me-2"></i> My Salary Slips
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Finance Management (Admin) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseFinanceAD"
+        >
+          <i class="fas fa-chart-line me-2"></i> Finance Management
+        </button>
+      </h2>
+      <div id="collapseFinanceAD" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'financial_dashboard' %}"
+          >
+            <i class="fas fa-tachometer-alt me-2"></i> Financial Dashboard
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'all_transactions' %}"
+          >
+            <i class="fas fa-exchange-alt me-2"></i> All Transactions
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
+
+    <!-- =====================================================
+         HR ROLE
+    ===================================================== -->
+    {% if request.session.role == 'hr' %}
+
+    <!-- Holiday Master -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseHolidaysHR"
+        >
+          <i class="fas fa-calendar-alt me-2"></i> Holiday Master
+        </button>
+      </h2>
+      <div id="collapseHolidaysHR" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'upcoming_holidays' %}"
+          >
+            <i class="fas fa-calendar-week me-2"></i> Upcoming Holidays
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Tasks (HR - Employee view) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseTasksHR"
+        >
+          <i class="fas fa-tasks me-2"></i> My Tasks
+        </button>
+      </h2>
+      <div id="collapseTasksHR" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_assigned_tasks' %}"
+          >
+            <i class="fas fa-list-ul me-2"></i> My Assigned Tasks
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave & Attendance -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseLeaveHR"
+        >
+          <i class="fas fa-calendar-check me-2"></i> Leave & Attendance
+        </button>
+      </h2>
+      <div id="collapseLeaveHR" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'apply_leave' %}"
+          >
+            <i class="fas fa-calendar-plus me-2"></i> Apply Leave
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_leave_applications' %}"
+          >
+            <i class="fas fa-file-alt me-2"></i> My Leave Applications
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'pending_leave_requests' %}"
+          >
+            <i class="fas fa-clock me-2"></i> Pending Leave Requests
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'all_leave_applications' %}"
+          >
+            <i class="fas fa-list-ul me-2"></i> All Leave Applications
+          </a>
+          <hr class="my-2 border-secondary" />
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'punch_attendance' %}"
+          >
+            <i class="fas fa-fingerprint me-2"></i> Punch Attendance
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_attendance' %}"
+          >
+            <i class="fas fa-calendar-check me-2"></i> My Attendance
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'attendance_list' %}"
+          >
+            <i class="fas fa-table me-2"></i> Attendance Sheet
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salary Management (HR) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseSalaryHR"
+        >
+          <i class="fas fa-money-bill-wave me-2"></i> Salary Management
+        </button>
+      </h2>
+      <div id="collapseSalaryHR" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'salary_sheet' %}"
+          >
+            <i class="fas fa-file-invoice-dollar me-2"></i> Salary Sheet
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'view_salary_history' %}"
+          >
+            <i class="fas fa-history me-2"></i> Salary History
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_salary_slips' %}"
+          >
+            <i class="fas fa-receipt me-2"></i> My Salary Slips
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
+
+
+    <!-- =====================================================
+         SALES ROLE
+    ===================================================== -->
+    {% if request.session.role == 'sales' %}
+
+    <!-- Holiday Master -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseHolidaysSL"
+        >
+          <i class="fas fa-calendar-alt me-2"></i> Holiday Master
+        </button>
+      </h2>
+      <div id="collapseHolidaysSL" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'upcoming_holidays' %}"
+          >
+            <i class="fas fa-calendar-week me-2"></i> Upcoming Holidays
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Tasks (Sales) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseTasksSL"
+        >
+          <i class="fas fa-tasks me-2"></i> My Tasks
+        </button>
+      </h2>
+      <div id="collapseTasksSL" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_assigned_tasks' %}"
+          >
+            <i class="fas fa-list-ul me-2"></i> My Assigned Tasks
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseSalesSL"
+        >
+          <i class="fas fa-handshake me-2"></i> Sales Management
+        </button>
+      </h2>
+      <div id="collapseSalesSL" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'add_client' %}"
+          >
+            <i class="fas fa-plus me-2"></i> Add Client
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'client_list' %}"
+          >
+            <i class="fas fa-list me-2"></i> Client List
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave & Attendance -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseLeaveSL"
+        >
+          <i class="fas fa-calendar-check me-2"></i> Leave & Attendance
+        </button>
+      </h2>
+      <div id="collapseLeaveSL" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'apply_leave' %}"
+          >
+            <i class="fas fa-calendar-plus me-2"></i> Apply Leave
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_leave_applications' %}"
+          >
+            <i class="fas fa-file-alt me-2"></i> My Leave Applications
+          </a>
+          <hr class="my-2 border-secondary" />
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'punch_attendance' %}"
+          >
+            <i class="fas fa-fingerprint me-2"></i> Punch Attendance
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_attendance' %}"
+          >
+            <i class="fas fa-calendar-check me-2"></i> My Attendance
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salary (Sales - View Only) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseSalarySL"
+        >
+          <i class="fas fa-money-bill-wave me-2"></i> My Salary
+        </button>
+      </h2>
+      <div id="collapseSalarySL" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_salary_slips' %}"
+          >
+            <i class="fas fa-receipt me-2"></i> My Salary Slips
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
+
+    <!-- =====================================================
+         DEVELOPER ROLE
+    ===================================================== -->
+    {% if request.session.role == 'developer' %}
+
+    <!-- Holiday Master -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseHolidaysDV"
+        >
+          <i class="fas fa-calendar-alt me-2"></i> Holiday Master
+        </button>
+      </h2>
+      <div id="collapseHolidaysDV" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'upcoming_holidays' %}"
+          >
+            <i class="fas fa-calendar-week me-2"></i> Upcoming Holidays
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Tasks (Developer) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseTasksDV"
+        >
+          <i class="fas fa-tasks me-2"></i> My Tasks
+        </button>
+      </h2>
+      <div id="collapseTasksDV" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_assigned_tasks' %}"
+          >
+            <i class="fas fa-list-ul me-2"></i> My Assigned Tasks
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseProjectsDV"
+        >
+          <i class="fas fa-project-diagram me-2"></i> Project Management
+        </button>
+      </h2>
+      <div id="collapseProjectsDV" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'project_list' %}"
+          >
+            <i class="fas fa-list me-2"></i> Project List
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseReportsDV"
+        >
+          <i class="fas fa-clipboard-list me-2"></i> Reports Management
+        </button>
+      </h2>
+      <div id="collapseReportsDV" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'add_work_report' %}"
+          >
+            <i class="fas fa-plus-circle me-2"></i> Submit Work Report
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_work_reports' %}"
+          >
+            <i class="fas fa-file-alt me-2"></i> My Work Reports
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave & Attendance -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseLeaveDV"
+        >
+          <i class="fas fa-calendar-check me-2"></i> Leave & Attendance
+        </button>
+      </h2>
+      <div id="collapseLeaveDV" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'apply_leave' %}"
+          >
+            <i class="fas fa-calendar-plus me-2"></i> Apply Leave
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_leave_applications' %}"
+          >
+            <i class="fas fa-file-alt me-2"></i> My Leave Applications
+          </a>
+          <hr class="my-2 border-secondary" />
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'punch_attendance' %}"
+          >
+            <i class="fas fa-fingerprint me-2"></i> Punch Attendance
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_attendance' %}"
+          >
+            <i class="fas fa-calendar-check me-2"></i> My Attendance
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salary (Developer - View Only) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseSalaryDV"
+        >
+          <i class="fas fa-money-bill-wave me-2"></i> My Salary
+        </button>
+      </h2>
+      <div id="collapseSalaryDV" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_salary_slips' %}"
+          >
+            <i class="fas fa-receipt me-2"></i> My Salary Slips
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
+
+    <!-- =====================================================
+         SEO ROLE, Digital Marketing (SAME AS DEVELOPER)
+    ===================================================== -->
+    {% if request.session.role == 'seos' or request.session.role == 'digital_marketing' %}
+
+    <!-- Holiday Master -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseHolidaysSEO"
+        >
+          <i class="fas fa-calendar-alt me-2"></i> Holiday Master
+        </button>
+      </h2>
+      <div id="collapseHolidaysSEO" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'upcoming_holidays' %}"
+          >
+            <i class="fas fa-calendar-week me-2"></i> Upcoming Holidays
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Tasks (SEO) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseTasksSEO"
+        >
+          <i class="fas fa-tasks me-2"></i> My Tasks
+        </button>
+      </h2>
+      <div id="collapseTasksSEO" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_assigned_tasks' %}"
+          >
+            <i class="fas fa-list-ul me-2"></i> My Assigned Tasks
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseProjectsSEO"
+        >
+          <i class="fas fa-project-diagram me-2"></i> Project Management
+        </button>
+      </h2>
+      <div id="collapseProjectsSEO" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'project_list' %}"
+          >
+            <i class="fas fa-list me-2"></i> Project List
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports Management -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseReportsSEO"
+        >
+          <i class="fas fa-clipboard-list me-2"></i> Reports Management
+        </button>
+      </h2>
+      <div id="collapseReportsSEO" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'add_work_report' %}"
+          >
+            <i class="fas fa-plus-circle me-2"></i> Submit Work Report
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_work_reports' %}"
+          >
+            <i class="fas fa-file-alt me-2"></i> My Work Reports
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave & Attendance -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseLeaveSEO"
+        >
+          <i class="fas fa-calendar-check me-2"></i> Leave & Attendance
+        </button>
+      </h2>
+      <div id="collapseLeaveSEO" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'apply_leave' %}"
+          >
+            <i class="fas fa-calendar-plus me-2"></i> Apply Leave
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_leave_applications' %}"
+          >
+            <i class="fas fa-file-alt me-2"></i> My Leave Applications
+          </a>
+          <hr class="my-2 border-secondary" />
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'punch_attendance' %}"
+          >
+            <i class="fas fa-fingerprint me-2"></i> Punch Attendance
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_attendance' %}"
+          >
+            <i class="fas fa-calendar-check me-2"></i> My Attendance
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salary (SEO - View Only) -->
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button bg-transparent text-white collapsed px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseSalarySEO"
+        >
+          <i class="fas fa-money-bill-wave me-2"></i> My Salary
+        </button>
+      </h2>
+      <div id="collapseSalarySEO" class="accordion-collapse collapse">
+        <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'my_salary_slips' %}"
+          >
+            <i class="fas fa-receipt me-2"></i> My Salary Slips
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
+  </div>
+</div>

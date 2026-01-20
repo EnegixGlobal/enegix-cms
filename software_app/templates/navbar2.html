@@ -1,0 +1,71 @@
+{% load static %}
+
+<nav class="navbar navbar-expand-lg navbar-dark table-title-bar fixed-top">
+  <div class="container-fluid">
+
+    <!-- Sidebar Toggle Button -->
+    <button class="btn btn-outline-light me-3" id="sidebarToggle">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Brand -->
+    <a class="navbar-brand" href="{% url 'dashboard' %}">
+      <i class="fa-solid fa-house"></i> Enegix Software
+    </a>
+
+    <!-- Right Side Menu -->
+    <ul class="navbar-nav ms-auto">
+      <li class="nav-item dropdown">
+
+        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+           href="#"
+           role="button"
+           data-bs-toggle="dropdown">
+
+          <!-- 🔥 ROLE BASED ICON -->
+          {% if request.session.role == 'super_admin' %}
+            <i class="fas fa-user-shield fw-bold"></i>
+          {% elif request.session.role == 'admin' or request.session.role == 'hr' %}
+            <i class="fas fa-user-tie fw-bold"></i>
+          {% elif request.session.role == 'developer' %}
+            <i class="fas fa-code fw-bold"></i>
+          {% elif request.session.role == 'sales' %}
+            <i class="fas fa-chart-line fw-bold"></i>
+          {% elif request.session.role == 'seos' %}
+            <i class="fas fa-search fw-bold"></i>
+          {% elif request.session.role == 'digital_marketing' %}
+            <i class="fas fa-bullhorn fw-bold"></i>
+          {% else %}
+            <i class="fas fa-user-circle"></i>
+          {% endif %}
+
+          <!-- 👤 NAME + ROLE LABEL -->
+          <span class="text-white fw-bold">
+            {{ request.session.full_name }}
+            <!-- <small class="text-light">
+              ({{ request.session.role }})
+            </small> -->
+          </span>
+        </a>
+
+        <!-- Dropdown Menu -->
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <a class="dropdown-item" href="{% url 'my_profile' %}">
+              <i class="fas fa-user"></i> Profile
+            </a>
+          </li>
+
+              <hr class="bg-secondary my-2" />
+
+          <li>
+            <a class="dropdown-item text-danger" href="{% url 'logout' %}">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+          </li>
+        </ul>
+
+      </li>
+    </ul>
+  </div>
+</nav>

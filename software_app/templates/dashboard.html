@@ -1,0 +1,47 @@
+{% extends 'base2.html' %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  body {
+    background: #f8f9fa;
+  }
+
+  .simple-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+    border-left: 6px solid #0152a4;
+    margin-top: 40px;
+  }
+
+  .simple-card h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #0152a4;
+    margin-bottom: 10px;
+  }
+
+  .simple-card p {
+    font-size: 1rem;
+    color: #6c757d;
+    line-height: 1.5;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="simple-card">
+        <h3>Welcome to the Dashboard</h3>
+        <p>This is your clean and minimal dashboard. You can start adding your features and modules here.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,541 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}Punch Attendance{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-fingerprint me-3 fs-3"></i>
+    <div>
+      <div class="fw-bold fs-3">Punch Attendance</div>
+      <small class="text-muted">Check-In, Check-Out, and Break Management</small>
+    </div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black">HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Punch Attendance</span>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <!-- Current Status Card -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-3">
+              <div class="p-3 {% if is_checked_in %}bg-success{% else %}bg-secondary{% endif %} bg-opacity-10 rounded">
+                <i class="fas fa-door-open fa-2x {% if is_checked_in %}text-success{% else %}text-muted{% endif %} mb-2"></i>
+                <h5 class="mb-0">
+                  {% if is_checked_in %}
+                    <span class="badge bg-success">Checked In</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Not Checked In</span>
+                  {% endif %}
+                </h5>
+                <small class="text-muted">Current Status</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 {% if is_on_break %}bg-warning{% else %}bg-light{% endif %} bg-opacity-10 rounded">
+                <i class="fas fa-coffee fa-2x {% if is_on_break %}text-warning{% else %}text-muted{% endif %} mb-2"></i>
+                <h5 class="mb-0">
+                  {% if is_on_break %}
+                    <span class="badge bg-warning text-dark">On Break</span>
+                  {% else %}
+                    <span class="badge bg-light text-dark">Working</span>
+                  {% endif %}
+                </h5>
+                <small class="text-muted">Break Status</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 bg-info bg-opacity-10 rounded">
+                <i class="fas fa-map-marker-alt fa-2x text-info mb-2"></i>
+                <h5 class="mb-0" id="locationStatus">
+                  <span class="badge bg-secondary">Checking...</span>
+                </h5>
+                <small class="text-muted">Location Status</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 bg-primary bg-opacity-10 rounded">
+                <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                <h5 class="mb-0" id="currentTime">--:--:--</h5>
+                <small class="text-muted">Current Time</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Punch Buttons -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header table-title-bar text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-hand-pointer me-2"></i>Punch Actions
+          </h5>
+        </div>
+
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <!-- Check In -->
+            <div class="col-md-3">
+              <button 
+                class="btn btn-success btn-lg w-100 h-100 punch-btn" 
+                data-punch-type="check_in"
+                {% if is_checked_in or is_on_break %}disabled{% endif %}>
+                <i class="fas fa-sign-in-alt fa-3x mb-3"></i>
+                <h5 class="mb-0">Check In</h5>
+                <small>Start your day</small>
+              </button>
+            </div>
+
+            <!-- Break Start -->
+            <div class="col-md-3">
+              <button 
+                class="btn btn-warning btn-lg w-100 h-100 punch-btn" 
+                data-punch-type="break_start"
+                {% if not is_checked_in or is_on_break %}disabled{% endif %}>
+                <i class="fas fa-coffee fa-3x mb-3"></i>
+                <h5 class="mb-0">Start Break</h5>
+                <small>Take a break</small>
+              </button>
+            </div>
+
+            <!-- Break End -->
+            <div class="col-md-3">
+              <button 
+                class="btn btn-info btn-lg w-100 h-100 punch-btn" 
+                data-punch-type="break_end"
+                {% if not is_on_break %}disabled{% endif %}>
+                <i class="fas fa-play fa-3x mb-3"></i>
+                <h5 class="mb-0">End Break</h5>
+                <small>Resume work</small>
+              </button>
+            </div>
+
+            <!-- Check Out -->
+            <div class="col-md-3">
+              <button 
+                class="btn btn-danger btn-lg w-100 h-100 punch-btn" 
+                data-punch-type="check_out"
+                {% if not is_checked_in or is_on_break %}disabled{% endif %}>
+                <i class="fas fa-sign-out-alt fa-3x mb-3"></i>
+                <h5 class="mb-0">Check Out</h5>
+                <small>End your day</small>
+              </button>
+            </div>
+          </div>
+
+          <!-- Geofence Info -->
+          <div class="alert alert-info mt-4 mb-0">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <h6 class="mb-2">
+                  <i class="fas fa-map-pin me-2"></i>Geofencing Active
+                </h6>
+                <p class="mb-0">
+                  <strong>Office Location:</strong> Lat: {{ config.latitude|default:"23.351633" }}, Long: {{ config.longitude|default:"85.3162779" }}<br>
+                  <strong>Allowed Radius:</strong> {{ config.radius_meters|default:"80" }} meters<br>
+                  <small class="text-muted">You must be within the geofence to punch attendance</small>
+                </p>
+              </div>
+              <div class="col-md-4 text-center">
+                <div id="distanceDisplay" class="p-3 bg-white rounded">
+                  <i class="fas fa-ruler fa-2x text-primary mb-2"></i>
+                  <h4 class="mb-0 text-primary" id="currentDistance">-- m</h4>
+                  <small class="text-muted">Distance from Office</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's Punches -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white">
+          <h6 class="mb-0">
+            <i class="fas fa-history me-2"></i>Today's Punch History
+          </h6>
+        </div>
+        <div class="card-body">
+          {% if today_punches %}
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Type</th>
+                  <th>Location</th>
+                  <th>Distance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for punch in today_punches %}
+                <tr>
+                  <td><strong>{{ punch.punch_time|date:"g:i A" }}</strong></td>
+                  <td>
+                    {% if punch.punch_type == 'check_in' %}
+                      <span class="badge bg-success">Check In</span>
+                    {% elif punch.punch_type == 'check_out' %}
+                      <span class="badge bg-danger">Check Out</span>
+                    {% elif punch.punch_type == 'break_start' %}
+                      <span class="badge bg-warning text-dark">Break Start</span>
+                    {% elif punch.punch_type == 'break_end' %}
+                      <span class="badge bg-info">Break End</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if punch.is_within_geofence %}
+                      <i class="fas fa-check-circle text-success"></i>
+                    {% else %}
+                      <i class="fas fa-times-circle text-danger"></i>
+                    {% endif %}
+                  </td>
+                  <td><small>{{ punch.distance_from_office }} m</small></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-4">
+            <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+            <p class="text-muted mb-0">No punches today</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Breaks -->
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-warning text-dark">
+          <h6 class="mb-0">
+            <i class="fas fa-coffee me-2"></i>Today's Break Summary
+          </h6>
+        </div>
+        <div class="card-body">
+          {% if today_breaks %}
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Start Time</th>
+                  <th>End Time</th>
+                  <th>Duration</th>
+                  <th>Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for break in today_breaks %}
+                <tr>
+                  <td><strong>{{ break.break_start.punch_time|date:"g:i A" }}</strong></td>
+                  <td>
+                    {% if break.break_end %}
+                      {{ break.break_end.punch_time|date:"g:i A" }}
+                    {% else %}
+                      <span class="badge bg-warning">Ongoing</span>
+                    {% endif %}
+                  </td>
+                  <td><strong>{{ break.duration_minutes }} mins</strong></td>
+                  <td>
+                    {% if break.is_lunch_break %}
+                      <span class="badge bg-success">Lunch</span>
+                    {% else %}
+                      <span class="badge bg-secondary">Regular</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-4">
+            <i class="fas fa-coffee fa-2x text-muted mb-2"></i>
+            <p class="text-muted mb-0">No breaks taken today</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Important Instructions -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card border-info">
+        <div class="card-header bg-info text-white">
+          <h6 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>Attendance Rules
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="text-primary">Working Hours</h6>
+              <ul class="mb-3">
+                <li><strong>Office Time:</strong> 9:30 AM - 6:30 PM (9 hours)</li>
+                <li><strong>Work Hours:</strong> 8 hours (excluding lunch)</li>
+                <li><strong>Lunch Break:</strong> 2:00 PM - 3:00 PM (1 hour)</li>
+                <li><strong>Late Mark:</strong> Check-in after 10:30 AM = Half Day</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-success">Attendance Status</h6>
+              <ul class="mb-3">
+                <li><strong>Present (P):</strong> Work ≥ 7 hours</li>
+                <li><strong>Half Day (HD):</strong> Work < 7 hours OR late check-in</li>
+                <li><strong>Absent (A):</strong> No check-in/check-out</li>
+                <li><strong>Break Deduction:</strong> All breaks deducted from work hours</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center py-4">
+        <div class="spinner-border text-primary mb-3" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5>Processing Punch...</h5>
+        <p class="text-muted mb-0">Please wait while we verify your location</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let userLatitude = null;
+let userLongitude = null;
+const officeLatitude = {{ config.latitude|default:"23.351633" }};
+const officeLongitude = {{ config.longitude|default:"85.3162779" }};
+const allowedRadius = {{ config.radius_meters|default:"80" }};
+
+// 🔥 Global loading modal reference
+let loadingModal = null;
+
+// Update current time
+function updateTime() {
+  const now = new Date();
+  const timeString = now.toLocaleTimeString('en-IN', { hour12: false });
+  document.getElementById('currentTime').textContent = timeString;
+}
+setInterval(updateTime, 1000);
+updateTime();
+
+// Calculate distance using Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000; // Earth radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// Get user location
+function getUserLocation() {
+  const locationStatus = document.getElementById('locationStatus');
+  
+  if (!navigator.geolocation) {
+    locationStatus.innerHTML = '<span class="badge bg-danger">Not Supported</span>';
+    alert('❌ Geolocation is not supported by your browser!');
+    return;
+  }
+  
+  locationStatus.innerHTML = '<span class="badge bg-warning">Getting Location...</span>';
+  
+  navigator.geolocation.getCurrentPosition(
+    function(position) {
+      userLatitude = position.coords.latitude;
+      userLongitude = position.coords.longitude;
+      
+      console.log('User Location:', userLatitude, userLongitude);
+      console.log('Office Location:', officeLatitude, officeLongitude);
+      
+      const distance = calculateDistance(
+        userLatitude, userLongitude,
+        officeLatitude, officeLongitude
+      );
+      
+      const distanceRounded = Math.round(distance);
+      document.getElementById('currentDistance').textContent = distanceRounded + ' m';
+      
+      if (distance <= allowedRadius) {
+        locationStatus.innerHTML = '<span class="badge bg-success">Within Geofence ✓</span>';
+      } else {
+        locationStatus.innerHTML = '<span class="badge bg-danger">Outside Geofence ✗</span>';
+      }
+    },
+    function(error) {
+      console.error('Location error:', error);
+      let errorMsg = 'Location Error';
+      
+      if (error.code === error.PERMISSION_DENIED) {
+        errorMsg = 'Permission Denied';
+        alert('❌ Location permission denied! Please enable location access in your browser settings.');
+      } else if (error.code === error.POSITION_UNAVAILABLE) {
+        errorMsg = 'Position Unavailable';
+        alert('❌ Location information is unavailable. Please check your GPS.');
+      } else if (error.code === error.TIMEOUT) {
+        errorMsg = 'Timeout';
+        alert('❌ Location request timed out. Please try again.');
+      }
+      
+      locationStatus.innerHTML = `<span class="badge bg-danger">${errorMsg}</span>`;
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
+}
+
+// Get location on page load and refresh every 10 seconds
+getUserLocation();
+setInterval(getUserLocation, 10000);
+
+// 🔥 FIX: Function to properly hide loading modal
+function hideLoadingModal() {
+  if (loadingModal) {
+    loadingModal.hide();
+    // Also remove backdrop manually if stuck
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (backdrop) {
+      backdrop.remove();
+    }
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  }
+}
+
+// Handle punch button clicks
+document.querySelectorAll('.punch-btn').forEach(button => {
+  button.addEventListener('click', function() {
+    const punchType = this.dataset.punchType;
+    
+    if (!userLatitude || !userLongitude) {
+      alert('❌ Location not available. Please wait while we get your location...');
+      getUserLocation();
+      return;
+    }
+    
+    const distance = calculateDistance(
+      userLatitude, userLongitude,
+      officeLatitude, officeLongitude
+    );
+    
+    console.log('Punch attempt - Distance:', distance, 'Allowed:', allowedRadius);
+    
+    if (distance > allowedRadius) {
+      alert(`❌ You are ${Math.round(distance)}m away from office.\nYou must be within ${allowedRadius}m to punch!`);
+      return;
+    }
+    
+    // Confirm action
+    let confirmMsg = '';
+    if (punchType === 'check_in') {
+      confirmMsg = 'Confirm Check In?';
+    } else if (punchType === 'check_out') {
+      confirmMsg = 'Confirm Check Out? This will calculate your attendance.';
+    } else if (punchType === 'break_start') {
+      confirmMsg = 'Start Break?';
+    } else if (punchType === 'break_end') {
+      confirmMsg = 'End Break and resume work?';
+    }
+    
+    if (!confirm(confirmMsg)) return;
+    
+    // 🔥 FIX: Show loading modal properly
+    const modalElement = document.getElementById('loadingModal');
+    loadingModal = new bootstrap.Modal(modalElement);
+    loadingModal.show();
+    
+    // Send punch request
+    const formData = new FormData();
+    formData.append('punch_type', punchType);
+    formData.append('latitude', userLatitude);
+    formData.append('longitude', userLongitude);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    // 🔥 FIX: Improved fetch with guaranteed modal hide
+    fetch("{% url 'process_punch' %}", {
+      method: "POST",
+      body: formData
+    })
+    .then(response => {
+      // 🔥 ALWAYS hide modal first, regardless of response
+      hideLoadingModal();
+      
+      if (!response.ok) {
+        throw new Error('Server error: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        alert('✅ ' + data.message);
+        location.reload();
+      } else {
+        alert('❌ ' + data.message);
+      }
+    })
+    .catch(error => {
+      // 🔥 ALWAYS hide modal on error too
+      hideLoadingModal();
+      console.error('Error:', error);
+      alert('❌ Connection failed. Please try again.');
+    });
+  });
+});
+</script>
+
+<style>
+.punch-btn {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s;
+}
+
+.punch-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.punch-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>
+
+{% endblock %}

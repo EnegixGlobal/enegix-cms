@@ -1,0 +1,508 @@
+{% extends 'base2.html' %}
+{% load static %}
+
+{% block title %}Review Work Report - {{ report.report_id }}{% endblock %}
+
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-user-check me-3 fs-2" style="color: #0152a4;"></i>
+    <div class="fw-bold fs-3">Review Work Report</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Review {{ report.report_id }}</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <!-- Report Summary Card -->
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar fw-bold text-white">
+      <i class="fas fa-info-circle me-2"></i>Report Summary - {{ report.report_id }}
+    </div>
+    <div class="card-body p-4">
+      <div class="row">
+        <div class="col-md-3 text-center mb-3">
+          <div class="report-icon-section">
+            <div class="report-icon">
+              <i class="fas fa-clipboard-check"></i>
+            </div>
+            <h5 class="mt-3 mb-1">{{ report.report_id }}</h5>
+            <div class="mt-2">
+              {% if report.overall_status == 'completed' %}
+              <span class="badge modern-badge badge-completed">
+                <i class="fas fa-check-circle me-1"></i>Completed
+              </span>
+              {% elif report.overall_status == 'in_progress' %}
+              <span class="badge modern-badge badge-in-progress">
+                <i class="fas fa-spinner me-1"></i>In Progress
+              </span>
+              {% elif report.overall_status == 'blocked' %}
+              <span class="badge modern-badge badge-blocked">
+                <i class="fas fa-exclamation-circle me-1"></i>Blocked
+              </span>
+              {% else %}
+              <span class="badge modern-badge badge-pending">
+                <i class="fas fa-clock me-1"></i>Pending
+              </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-9">
+          <div class="info-grid">
+            <div class="info-item">
+              <i class="fas fa-user text-primary"></i>
+              <span class="info-label">Employee:</span>
+              <span class="info-value">{{ report.employee_name }} ({{ report.employee_id_display }})</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-user-tag text-primary"></i>
+              <span class="info-label">Role:</span>
+              <span class="info-value">{{ report.employee_role|title }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-folder-open text-primary"></i>
+              <span class="info-label">Project:</span>
+              <span class="info-value">{{ report.project_name }} ({{ report.project_id_display }})</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-list text-primary"></i>
+              <span class="info-label">Type:</span>
+              <span class="info-value">{{ report.project_type|title }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-calendar-alt text-primary"></i>
+              <span class="info-label">Work Date:</span>
+              <span class="info-value">{{ report.work_date }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-clock text-primary"></i>
+              <span class="info-label">Hours Worked:</span>
+              <span class="info-value"><strong class="text-success">{{ report.hours_worked }} hours</strong></span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-calendar text-primary"></i>
+              <span class="info-label">Submitted On:</span>
+              <span class="info-value">{{ report.created_at|date:"d M Y, h:i A" }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-sync text-primary"></i>
+              <span class="info-label">Last Updated:</span>
+              <span class="info-value">{{ report.updated_at|date:"d M Y, h:i A" }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Work Details Card -->
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar fw-bold text-white">
+      <i class="fas fa-tasks me-2"></i>Work Details
+    </div>
+    <div class="card-body p-4">
+      <div class="section-block mb-4">
+        <h6 class="section-title"><i class="fas fa-check-circle text-success me-2"></i>Tasks Completed Today</h6>
+        <div class="content-box">
+          {{ report.tasks_completed|linebreaks }}
+        </div>
+      </div>
+
+      {% if report.tasks_in_progress %}
+      <div class="section-block mb-4">
+        <h6 class="section-title"><i class="fas fa-spinner text-info me-2"></i>Tasks In Progress</h6>
+        <div class="content-box">
+          {{ report.tasks_in_progress|linebreaks }}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if report.tasks_planned %}
+      <div class="section-block mb-4">
+        <h6 class="section-title"><i class="fas fa-list-ul text-warning me-2"></i>Tasks Planned Next</h6>
+        <div class="content-box">
+          {{ report.tasks_planned|linebreaks }}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Challenges & Support Card -->
+  {% if report.challenges_faced or report.support_needed %}
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar fw-bold text-white" style="background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);">
+      <i class="fas fa-exclamation-triangle me-2"></i>Challenges & Support Needed
+    </div>
+    <div class="card-body p-4">
+      {% if report.challenges_faced %}
+      <div class="section-block mb-4">
+        <h6 class="section-title"><i class="fas fa-bug text-danger me-2"></i>Challenges Faced</h6>
+        <div class="content-box alert-danger">
+          {{ report.challenges_faced|linebreaks }}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if report.support_needed %}
+      <div class="section-block">
+        <h6 class="section-title"><i class="fas fa-hands-helping text-primary me-2"></i>Support Needed</h6>
+        <div class="content-box alert-warning">
+          {{ report.support_needed|linebreaks }}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Additional Notes & Attachments -->
+  {% if report.additional_notes or report.attachment_1 or report.attachment_2 or report.attachment_3 %}
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar fw-bold text-white">
+      <i class="fas fa-paperclip me-2"></i>Additional Information
+    </div>
+    <div class="card-body p-4">
+      {% if report.additional_notes %}
+      <div class="section-block mb-4">
+        <h6 class="section-title"><i class="fas fa-sticky-note text-primary me-2"></i>Additional Notes</h6>
+        <div class="content-box">
+          {{ report.additional_notes|linebreaks }}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if report.attachment_1 or report.attachment_2 or report.attachment_3 %}
+      <div class="section-block">
+        <h6 class="section-title"><i class="fas fa-file text-primary me-2"></i>Attachments</h6>
+        <div class="row mt-3">
+          {% if report.attachment_1 %}
+          <div class="col-md-4 mb-3">
+            <div class="attachment-card">
+              <i class="fas fa-file-download fa-2x text-primary mb-2"></i>
+              <p class="mb-2"><strong>Attachment 1</strong></p>
+              <a href="{{ report.attachment_1.url }}" target="_blank" class="btn btn-sm btn-primary">
+                <i class="fas fa-download me-1"></i>Download
+              </a>
+            </div>
+          </div>
+          {% endif %}
+          {% if report.attachment_2 %}
+          <div class="col-md-4 mb-3">
+            <div class="attachment-card">
+              <i class="fas fa-file-download fa-2x text-primary mb-2"></i>
+              <p class="mb-2"><strong>Attachment 2</strong></p>
+              <a href="{{ report.attachment_2.url }}" target="_blank" class="btn btn-sm btn-primary">
+                <i class="fas fa-download me-1"></i>Download
+              </a>
+            </div>
+          </div>
+          {% endif %}
+          {% if report.attachment_3 %}
+          <div class="col-md-4 mb-3">
+            <div class="attachment-card">
+              <i class="fas fa-file-download fa-2x text-primary mb-2"></i>
+              <p class="mb-2"><strong>Attachment 3</strong></p>
+              <a href="{{ report.attachment_3.url }}" target="_blank" class="btn btn-sm btn-primary">
+                <i class="fas fa-download me-1"></i>Download
+              </a>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Review Form Card -->
+  <div class="card shadow-lg mb-4 modern-card review-form-card">
+    <div class="card-header table-title-bar fw-bold text-white" style="background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);">
+      <i class="fas fa-pen me-2"></i>Submit Your Review
+    </div>
+    <div class="card-body p-4">
+      <form method="POST" action="{% url 'review_work_report' report.id %}" id="reviewForm">
+        {% csrf_token %}
+        
+        <div class="alert alert-info modern-alert mb-4">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Review Guidelines:</strong>
+          <ul class="mb-0 mt-2">
+            <li>Provide constructive feedback on the work completed</li>
+            <li>Acknowledge challenges faced and offer solutions if needed</li>
+            <li>Highlight areas of improvement or appreciation</li>
+            <li>Once reviewed, the employee cannot edit this report</li>
+          </ul>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-bold">
+            <i class="fas fa-comments text-success me-2"></i>
+            Admin Feedback <span class="text-danger">*</span>
+          </label>
+          <textarea 
+            class="form-control modern-input" 
+            id="admin_feedback" 
+            name="admin_feedback" 
+            rows="8" 
+            placeholder="Write your feedback here... Be specific about what was done well and what can be improved."
+            required
+          ></textarea>
+          <small class="text-muted">
+            <i class="fas fa-lightbulb me-1"></i>
+            Tip: Mention specific tasks, provide actionable suggestions, and encourage good practices
+          </small>
+        </div>
+
+        <div class="review-summary p-3 mb-4">
+          <h6 class="fw-bold mb-3"><i class="fas fa-user-shield text-success me-2"></i>Review Summary</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <p class="mb-2"><strong>Reviewed By:</strong> {{ request.session.full_name }}</p>
+              <p class="mb-0"><strong>Role:</strong> {{ request.session.role|title }}</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+              <p class="mb-2"><strong>Review Date:</strong> <span id="currentDate"></span></p>
+              <p class="mb-0"><strong>Review Time:</strong> <span id="currentTime"></span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-between pt-3 border-top">
+          <a href="{% url 'all_work_reports' %}" class="btn btn-secondary btn-action-main">
+            <i class="fas fa-times me-2"></i>Cancel
+          </a>
+          <button type="submit" class="btn btn-success btn-action-main" onclick="return confirm('Are you sure you want to submit this review? This action cannot be undone.')">
+            <i class="fas fa-check-circle me-2"></i>Submit Review
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Display current date and time
+function updateDateTime() {
+    const now = new Date();
+    
+    // Format date
+    const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+    
+    // Format time
+    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+}
+
+// Update time every second
+updateDateTime();
+setInterval(updateDateTime, 1000);
+
+// Form validation
+document.getElementById('reviewForm').addEventListener('submit', function(e) {
+    const feedback = document.getElementById('admin_feedback').value.trim();
+    
+    if (feedback.length < 10) {
+        e.preventDefault();
+        alert('Please provide more detailed feedback (at least 10 characters)');
+        return false;
+    }
+});
+</script>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .report-icon-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .report-icon {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #0152a4 0%, #0168cc 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    box-shadow: 0 5px 20px rgba(1, 82, 164, 0.3);
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+  }
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .info-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+  }
+
+  .info-item i {
+    font-size: 18px;
+  }
+
+  .info-label {
+    font-weight: 600;
+    color: #555;
+  }
+
+  .info-value {
+    color: #333;
+  }
+
+  .section-block {
+    margin-bottom: 25px;
+  }
+
+  .section-title {
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+  }
+
+  .content-box {
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    border: 2px solid #dee2e6;
+    color: #333;
+    line-height: 1.8;
+  }
+
+  .content-box.alert-danger {
+    background: linear-gradient(135deg, #ffe0e0 0%, #ffd0d0 100%);
+    border-color: #dc3545;
+  }
+
+  .content-box.alert-warning {
+    background: linear-gradient(135deg, #fff4e0 0%, #ffe8cc 100%);
+    border-color: #ffc107;
+  }
+
+  .attachment-card {
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    border: 2px solid #dee2e6;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .attachment-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+
+  .modern-badge {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .badge-completed {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+  }
+
+  .badge-in-progress {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .badge-pending {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    color: black;
+  }
+
+  .badge-blocked {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    color: white;
+  }
+
+  .review-form-card {
+    border: 3px solid #28a745;
+    box-shadow: 0 5px 25px rgba(40, 167, 69, 0.2);
+  }
+
+  .modern-input {
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+    color: #000;
+    font-size: 15px;
+  }
+
+  .modern-input:focus {
+    border-color: #28a745 !important;
+    background-color: #f8fff9 !important;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .modern-alert {
+    border-radius: 10px;
+    border-left: 5px solid #17a2b8;
+    background: linear-gradient(135deg, #e9f7ff 0%, #e1f5fe 100%);
+  }
+
+  .review-summary {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-radius: 15px;
+    border: 2px solid #28a745;
+  }
+
+  .btn-action-main {
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-action-main:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,1178 @@
+{% extends "base2.html" %}
+{% load static %}
+{% block content %}
+<div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-users me-3 fs-2" style="color: #138496;"></i>
+    <div class="fw-bold fs-3">Employee Management</div>
+  </div>
+  <div class="breadcrumb-text text-end">
+    <span class="text-black"><i class="fas fa-home me-1"></i>HOME</span>
+    <span class="mx-2 text-black">/</span>
+    <span class="text-black-50">Employee List</span>
+  </div>
+</div>
+
+<div class="container-fluid mt-2">
+  <div class="card shadow-lg mb-4 modern-card">
+    <div class="card-header table-title-bar d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);">
+      <span class="fw-bold text-white"><i class="fas fa-list-ul me-2"></i>All Employees</span>
+      <a href="{% url 'add_employee' %}" class="btn btn-light btn-add-new">
+        <i class="fas fa-user-plus me-2"></i>Add New Employee
+      </a>
+    </div>
+    <div class="card-body p-4">
+      <!-- Enhanced Search and Filter -->
+      <div class="filter-section mb-4 p-3">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="search-box">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" id="searchInput" class="form-control modern-input ps-5" placeholder="Search by name, email, or employee ID...">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="filter-box">
+              <i class="fas fa-user-tie filter-icon"></i>
+              <select id="roleFilter" class="form-control modern-input ps-5">
+                <option value="">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="hr">HR</option>
+                <option value="sales">Sales</option>
+                <option value="developer">Developer</option>
+                <option value="seos">SEO Specialist</option>
+                <option value="digital_marketing">Digital Marketing</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="filter-box">
+              <i class="fas fa-toggle-on filter-icon"></i>
+              <select id="statusFilter" class="form-control modern-input ps-5">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="blocked">Blocked</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-primary w-100 btn-filter" onclick="filterTable()">
+              <i class="fas fa-filter me-2"></i>Apply
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Employee Table -->
+      <div class="table-responsive">
+        <table class="table table-hover modern-table" id="employeeTable">
+          <thead>
+            <tr>
+              <th><i class="fas fa-hashtag me-2"></i>S.No</th>
+              <th><i class="fas fa-id-badge me-2"></i>Employee ID</th>
+              <th><i class="fas fa-user-circle me-2"></i>Profile</th>
+              <th><i class="fas fa-user me-2"></i>Name</th>
+              <th><i class="fas fa-envelope me-2"></i>Email</th>
+              <th><i class="fas fa-briefcase me-2"></i>Role</th>
+              <th><i class="fas fa-award me-2"></i>Designation</th>
+              <th><i class="fas fa-money-bill-wave me-2"></i>Base Salary</th>
+              <th><i class="fas fa-user-lock me-2"></i>Username</th>
+              <th><i class="fas fa-key me-2"></i>Password</th>
+              <th><i class="fas fa-signal me-2"></i>Status</th>
+              <th><i class="fas fa-cogs me-2"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for employee in employees %}
+            <tr class="table-row-hover">
+              <td><span class="serial-number">{{ employees.start_index|add:forloop.counter0 }}</span></td>
+              <td><span class="employee-id-badge">{{ employee.employee_id }}</span></td>
+              <td>
+                <div class="profile-wrapper">
+                  {% if employee.profile_pic %}
+                    <img src="{{ employee.profile_pic.url }}" alt="Profile" class="profile-img">
+                  {% else %}
+                    <img src="{% static 'images/default-profile.png' %}" alt="Profile" class="profile-img">
+                  {% endif %}
+                  <div class="profile-status"></div>
+                </div>
+              </td>
+              <td><strong>{{ employee.full_name }}</strong></td>
+              <td><span class="text-muted">{{ employee.email }}</span></td>
+              <td>
+                <span class="badge modern-badge badge-role-{{ employee.role }}" data-role="{{ employee.role }}">
+                  <i class="fas fa-circle me-1" style="font-size: 8px;"></i>{{ employee.get_role_display }}
+                </span>
+              </td>
+              <td>{{ employee.designation }}</td>
+              <td><span class="salary-value">₹{{ employee.base_salary|default:"0"|floatformat:0 }}</span></td>
+              <td><span class="username-value">{{ employee.username }}</span></td>
+              <td>
+                <div class="password-wrapper">
+                  <span class="password-hidden" id="password-{{ employee.id }}">••••••••</span>
+                  <span class="password-visible" id="password-show-{{ employee.id }}" style="display: none;">{{ employee.password }}</span>
+                  <button class="btn btn-sm btn-toggle-password" onclick="togglePassword({{ employee.id }})" title="Show/Hide Password">
+                    <i class="fas fa-eye" id="eye-icon-{{ employee.id }}"></i>
+                  </button>
+                </div>
+              </td>
+              <td>
+                {% if employee.is_blocked %}
+                  <span class="badge modern-badge badge-blocked">
+                    <i class="fas fa-ban me-1"></i>Blocked
+                  </span>
+                {% elif employee.is_active %}
+                  <span class="badge modern-badge badge-active">
+                    <i class="fas fa-check-circle me-1"></i>Active
+                  </span>
+                {% else %}
+                  <span class="badge modern-badge badge-inactive">
+                    <i class="fas fa-minus-circle me-1"></i>Inactive
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <!-- View Details button - visible to all logged-in users -->
+                  <button class="btn btn-action btn-info" data-bs-toggle="modal" data-bs-target="#viewModal{{ employee.id }}" title="View Details">
+                    <i class="fas fa-eye"></i>
+                  </button>
+
+                  <!-- Edit and Delete buttons - visible ONLY to super_admin -->
+                  {% if request.session.role == 'super_admin' %}
+                    <a href="{% url 'edit_employee' employee.id %}" class="btn btn-action btn-warning" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <button class="btn btn-action btn-danger" onclick="confirmDelete({{ employee.id }})" title="Delete">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                    
+                    <!-- Toggle Block Button -->
+                    {% if employee.is_blocked %}
+                      <button class="btn btn-action btn-success" onclick="confirmUnblock({{ employee.id }})" title="Unblock Employee">
+                        <i class="fas fa-unlock"></i>
+                      </button>
+                    {% else %}
+                      <button class="btn btn-action btn-secondary" onclick="confirmBlock({{ employee.id }})" title="Block Employee">
+                        <i class="fas fa-lock"></i>
+                      </button>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+
+            <!-- Enhanced View Modal (Bootstrap 5 compatible) -->
+            <div class="modal fade" id="viewModal{{ employee.id }}" tabindex="-1" aria-labelledby="viewModalLabel{{ employee.id }}" aria-hidden="true">
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content modern-modal">
+                  <div class="modal-header bg-gradient-primary">
+                    <h5 class="modal-title text-white" id="viewModalLabel{{ employee.id }}">
+                      <i class="fas fa-user-circle me-2"></i>Employee Details - {{ employee.employee_id }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body p-4">
+                    <div class="row mb-4">
+                      <div class="col-md-3 text-center">
+                        <div class="profile-section">
+                          {% if employee.profile_pic %}
+                            <img src="{{ employee.profile_pic.url }}" alt="Profile" class="profile-img-large">
+                          {% else %}
+                            <img src="{% static 'images/default-profile.png' %}" alt="Profile" class="profile-img-large">
+                          {% endif %}
+                          <div class="mt-3">
+                            {% if employee.is_blocked %}
+                              <span class="badge modern-badge badge-blocked">
+                                <i class="fas fa-ban me-1"></i>Blocked
+                              </span>
+                            {% elif employee.is_active %}
+                              <span class="badge modern-badge badge-active">
+                                <i class="fas fa-check-circle me-1"></i>Active
+                              </span>
+                            {% else %}
+                              <span class="badge modern-badge badge-inactive">
+                                <i class="fas fa-minus-circle me-1"></i>Inactive
+                              </span>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-9">
+                        <h4 class="mb-3">{{ employee.full_name }}</h4>
+                        <div class="info-grid">
+                          <div class="info-item">
+                            <i class="fas fa-id-badge text-primary"></i>
+                            <span class="info-label">Employee ID:</span>
+                            <span class="info-value employee-id-highlight">{{ employee.employee_id }}</span>
+                          </div>
+                          <div class="info-item">
+                            <i class="fas fa-envelope text-primary"></i>
+                            <span class="info-label">Email:</span>
+                            <span class="info-value">{{ employee.email }}</span>
+                          </div>
+                          <div class="info-item">
+                            <i class="fas fa-mobile-alt text-primary"></i>
+                            <span class="info-label">Mobile:</span>
+                            <span class="info-value">{{ employee.mobile }}</span>
+                          </div>
+                          <div class="info-item">
+                            <i class="fas fa-venus-mars text-primary"></i>
+                            <span class="info-label">Gender:</span>
+                            <span class="info-value">{{ employee.get_gender_display }}</span>
+                          </div>
+                          <div class="info-item">
+                            <i class="fas fa-birthday-cake text-primary"></i>
+                            <span class="info-label">Date of Birth:</span>
+                            <span class="info-value">{{ employee.dob }}</span>
+                          </div>
+                          <div class="info-item">
+                            <i class="fas fa-briefcase text-primary"></i>
+                            <span class="info-label">Role:</span>
+                            <span class="badge modern-badge badge-role-{{ employee.role }}">{{ employee.get_role_display }}</span>
+                          </div>
+                          <div class="info-item">
+                            <i class="fas fa-award text-primary"></i>
+                            <span class="info-label">Designation:</span>
+                            <span class="info-value">{{ employee.designation }}</span>
+                          </div>
+                          <div class="info-item">
+                            <i class="fas fa-money-bill-wave text-primary"></i>
+                            <span class="info-label">Base Salary:</span>
+                            <span class="info-value salary-highlight">₹{{ employee.base_salary|default:"0"|floatformat:0 }}</span>
+                          </div>
+                          <div class="info-item">
+                            <i class="fas fa-user-lock text-primary"></i>
+                            <span class="info-label">Username:</span>
+                            <span class="info-value"><strong>{{ employee.username }}</strong></span>
+                          </div>
+                          <div class="info-item">
+                            <i class="fas fa-key text-primary"></i>
+                            <span class="info-label">Password:</span>
+                            <div class="password-wrapper-modal">
+                              <span class="password-hidden" id="modal-password-{{ employee.id }}">••••••••</span>
+                              <span class="password-visible" id="modal-password-show-{{ employee.id }}" style="display: none;">{{ employee.password }}</span>
+                              <button class="btn btn-sm btn-toggle-password" onclick="toggleModalPassword({{ employee.id }})" title="Show/Hide Password">
+                                <i class="fas fa-eye" id="modal-eye-icon-{{ employee.id }}"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="section-header">
+                      <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                      <h5>Address Details</h5>
+                    </div>
+                    <div class="info-grid">
+                      <div class="info-item wide">
+                        <i class="fas fa-home text-primary"></i>
+                        <span class="info-label">Address:</span>
+                        <span class="info-value">{{ employee.address_line }}</span>
+                      </div>
+                      <div class="info-item">
+                        <i class="fas fa-city text-primary"></i>
+                        <span class="info-label">City:</span>
+                        <span class="info-value">{{ employee.city }}</span>
+                      </div>
+                      <div class="info-item">
+                        <i class="fas fa-flag text-primary"></i>
+                        <span class="info-label">State:</span>
+                        <span class="info-value">{{ employee.state }}</span>
+                      </div>
+                      <div class="info-item">
+                        <i class="fas fa-mail-bulk text-primary"></i>
+                        <span class="info-label">Pincode:</span>
+                        <span class="info-value">{{ employee.pincode }}</span>
+                      </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="section-header">
+                      <i class="fas fa-exclamation-triangle me-2 text-primary"></i>
+                      <h5>Emergency Contact</h5>
+                    </div>
+                    <div class="info-grid">
+                      <div class="info-item">
+                        <i class="fas fa-user-shield text-primary"></i>
+                        <span class="info-label">Name:</span>
+                        <span class="info-value">{{ employee.emergency_contact_name }}</span>
+                      </div>
+                      <div class="info-item">
+                        <i class="fas fa-phone text-primary"></i>
+                        <span class="info-label">Number:</span>
+                        <span class="info-value">{{ employee.emergency_contact_number }}</span>
+                      </div>
+                      <div class="info-item">
+                        <i class="fas fa-users text-primary"></i>
+                        <span class="info-label">Relation:</span>
+                        <span class="info-value">{{ employee.emergency_contact_relation }}</span>
+                      </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Bank Details Section -->
+                    <div class="section-header">
+                      <i class="fas fa-university me-2 text-primary"></i>
+                      <h5>Bank Details</h5>
+                    </div>
+                    <div class="info-grid">
+                      <div class="info-item">
+                        <i class="fas fa-credit-card text-primary"></i>
+                        <span class="info-label">Account Number:</span>
+                        <span class="info-value">{{ employee.account_number|default:"Not Provided" }}</span>
+                      </div>
+                      <div class="info-item">
+                        <i class="fas fa-qrcode text-primary"></i>
+                        <span class="info-label">IFSC Code:</span>
+                        <span class="info-value">{{ employee.ifsc_code|default:"Not Provided" }}</span>
+                      </div>
+                      <div class="info-item">
+                        <i class="fas fa-user text-primary"></i>
+                        <span class="info-label">Account Holder Name:</span>
+                        <span class="info-value">{{ employee.account_holder_name|default:"Not Provided" }}</span>
+                      </div>
+                      <div class="info-item">
+                        <i class="fas fa-landmark text-primary"></i>
+                        <span class="info-label">Bank Name:</span>
+                        <span class="info-value">{{ employee.bank_name|default:"Not Provided" }}</span>
+                      </div>
+                      <div class="info-item wide">
+                        <i class="fas fa-map-marker-alt text-primary"></i>
+                        <span class="info-label">Bank Address:</span>
+                        <span class="info-value">{{ employee.bank_address|default:"Not Provided" }}</span>
+                      </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="section-header">
+                      <i class="fas fa-folder-open me-2 text-primary"></i>
+                      <h5>Documents</h5>
+                    </div>
+                    {% if employee.resume %}
+                      <div class="document-item">
+                        <i class="fas fa-file-pdf text-danger"></i>
+                        <span>Resume</span>
+                        <a href="{{ employee.resume.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                          <i class="fas fa-download me-1"></i>Download
+                        </a>
+                      </div>
+                    {% endif %}
+
+                    {% if employee.documents.all %}
+                      <h6 class="mt-3 mb-2">Other Documents:</h6>
+                      {% for doc in employee.documents.all %}
+                        <div class="document-item">
+                          <i class="fas fa-file-alt text-info"></i>
+                          <span>{{ doc.document_name }}</span>
+                          <a href="{{ doc.document_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-download me-1"></i>Download
+                          </a>
+                        </div>
+                      {% endfor %}
+                    {% else %}
+                      <p class="text-muted"><i class="fas fa-info-circle me-1"></i>No additional documents uploaded.</p>
+                    {% endif %}
+
+                    {% if employee.is_blocked %}
+                      <hr class="my-4">
+                      <div class="alert alert-danger modern-alert">
+                        <i class="fas fa-ban me-2"></i>
+                        <strong>Blocked By:</strong> {{ employee.blocked_by.full_name }}<br>
+                        <strong>Blocked At:</strong> {{ employee.blocked_at }}
+                      </div>
+                    {% endif %}
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                      <i class="fas fa-times me-2"></i>Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <tr>
+              <td colspan="12" class="text-center text-muted py-5">
+                <i class="fas fa-users fa-3x mb-3 text-muted"></i>
+                <p>No employees found.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modern Pagination -->
+      {% if employees.has_other_pages %}
+      <div class="pagination-wrapper mt-4">
+        <div class="pagination-info">
+          <span class="text-muted">
+            <i class="fas fa-info-circle me-2"></i>
+            Showing <strong>{{ employees.start_index }}</strong> to <strong>{{ employees.end_index }}</strong> of <strong>{{ employees.paginator.count }}</strong> employees
+          </span>
+        </div>
+        
+        <nav aria-label="Page navigation">
+          <ul class="pagination modern-pagination">
+            <!-- First Page -->
+            {% if employees.has_previous %}
+            <li class="page-item">
+              <a class="page-link page-link-first" href="?page=1" title="First Page">
+                <i class="fas fa-angle-double-left"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link page-link-prev" href="?page={{ employees.previous_page_number }}" title="Previous Page">
+                <i class="fas fa-angle-left"></i>
+              </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+              <span class="page-link page-link-first">
+                <i class="fas fa-angle-double-left"></i>
+              </span>
+            </li>
+            <li class="page-item disabled">
+              <span class="page-link page-link-prev">
+                <i class="fas fa-angle-left"></i>
+              </span>
+            </li>
+            {% endif %}
+
+            <!-- Page Numbers -->
+            {% for num in employees.paginator.page_range %}
+              {% if employees.number == num %}
+                <li class="page-item active">
+                  <span class="page-link">{{ num }}</span>
+                </li>
+              {% elif num > employees.number|add:'-3' and num < employees.number|add:'3' %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+              {% endif %}
+            {% endfor %}
+
+            <!-- Last Page -->
+            {% if employees.has_next %}
+            <li class="page-item">
+              <a class="page-link page-link-next" href="?page={{ employees.next_page_number }}" title="Next Page">
+                <i class="fas fa-angle-right"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link page-link-last" href="?page={{ employees.paginator.num_pages }}" title="Last Page">
+                <i class="fas fa-angle-double-right"></i>
+              </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+              <span class="page-link page-link-next">
+                <i class="fas fa-angle-right"></i>
+              </span>
+            </li>
+            <li class="page-item disabled">
+              <span class="page-link page-link-last">
+                <i class="fas fa-angle-double-right"></i>
+              </span>
+            </li>
+            {% endif %}
+          </ul>
+        </nav>
+
+        <!-- Page Jump -->
+        <div class="page-jump">
+          <span class="me-2 text-muted">Go to page:</span>
+          <input type="number" id="pageJump" class="form-control form-control-sm" min="1" max="{{ employees.paginator.num_pages }}" placeholder="Page" style="width: 70px; display: inline-block;">
+          <button class="btn btn-sm btn-primary ms-2" onclick="jumpToPage()">
+            <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDelete(employeeId) {
+  if (confirm("Are you sure you want to delete this employee?")) {
+    window.location.href = `/delete-employee/${employeeId}/`;
+  }
+}
+
+function confirmBlock(employeeId) {
+  if (confirm("Are you sure you want to block this employee? They will not be able to access the system.")) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/toggle-employee-block/${employeeId}/`;
+    
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = 'csrfmiddlewaretoken';
+    csrfToken.value = getCookie('csrftoken');
+    form.appendChild(csrfToken);
+    
+    const isBlocked = document.createElement('input');
+    isBlocked.type = 'hidden';
+    isBlocked.name = 'is_blocked';
+    isBlocked.value = 'on';
+    form.appendChild(isBlocked);
+    
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+
+function confirmUnblock(employeeId) {
+  if (confirm("Are you sure you want to unblock this employee? They will regain access to the system.")) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/toggle-employee-block/${employeeId}/`;
+    
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = 'csrfmiddlewaretoken';
+    csrfToken.value = getCookie('csrftoken');
+    form.appendChild(csrfToken);
+    
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function togglePassword(employeeId) {
+  const hiddenSpan = document.getElementById('password-' + employeeId);
+  const visibleSpan = document.getElementById('password-show-' + employeeId);
+  const eyeIcon = document.getElementById('eye-icon-' + employeeId);
+  
+  if (hiddenSpan.style.display === 'none') {
+    hiddenSpan.style.display = 'inline';
+    visibleSpan.style.display = 'none';
+    eyeIcon.classList.remove('fa-eye-slash');
+    eyeIcon.classList.add('fa-eye');
+  } else {
+    hiddenSpan.style.display = 'none';
+    visibleSpan.style.display = 'inline';
+    eyeIcon.classList.remove('fa-eye');
+    eyeIcon.classList.add('fa-eye-slash');
+  }
+}
+
+function toggleModalPassword(employeeId) {
+  const hiddenSpan = document.getElementById('modal-password-' + employeeId);
+  const visibleSpan = document.getElementById('modal-password-show-' + employeeId);
+  const eyeIcon = document.getElementById('modal-eye-icon-' + employeeId);
+  
+  if (hiddenSpan.style.display === 'none') {
+    hiddenSpan.style.display = 'inline';
+    visibleSpan.style.display = 'none';
+    eyeIcon.classList.remove('fa-eye-slash');
+    eyeIcon.classList.add('fa-eye');
+  } else {
+    hiddenSpan.style.display = 'none';
+    visibleSpan.style.display = 'inline';
+    eyeIcon.classList.remove('fa-eye');
+    eyeIcon.classList.add('fa-eye-slash');
+  }
+}
+
+document.getElementById('searchInput').addEventListener('keyup', function() {
+  filterTable();
+});
+
+document.getElementById('roleFilter').addEventListener('change', function() {
+  filterTable();
+});
+
+document.getElementById('statusFilter').addEventListener('change', function() {
+  filterTable();
+});
+
+function filterTable() {
+  const searchValue = document.getElementById('searchInput').value.toLowerCase();
+  const roleValue = document.getElementById('roleFilter').value.toLowerCase();
+  const statusValue = document.getElementById('statusFilter').value.toLowerCase();
+  
+  const table = document.getElementById('employeeTable');
+  const rows = table.getElementsByTagName('tr');
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const cells = row.getElementsByTagName('td');
+    
+    if (cells.length > 0) {
+      const employeeId = cells[1].textContent.toLowerCase();
+      const name = cells[3].textContent.toLowerCase();
+      const email = cells[4].textContent.toLowerCase();
+      
+      // Get the role value from the data attribute
+      const roleBadge = cells[5].querySelector('.badge');
+      const role = roleBadge ? roleBadge.getAttribute('data-role').toLowerCase() : '';
+      
+      const status = cells[10].textContent.toLowerCase();
+      
+      const matchesSearch = employeeId.includes(searchValue) || name.includes(searchValue) || email.includes(searchValue);
+      const matchesRole = roleValue === '' || role === roleValue;
+      const matchesStatus = statusValue === '' || status.includes(statusValue);
+      
+      if (matchesSearch && matchesRole && matchesStatus) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    }
+  }
+}
+
+function jumpToPage() {
+  const pageNumber = document.getElementById('pageJump').value;
+  const maxPages = {{ employees.paginator.num_pages }};
+  
+  if (pageNumber && pageNumber >= 1 && pageNumber <= maxPages) {
+    window.location.href = '?page=' + pageNumber;
+  } else {
+    alert('Please enter a valid page number between 1 and ' + maxPages);
+  }
+}
+</script>
+
+<style>
+  .modern-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .ribbon-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .filter-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .search-box, .filter-box {
+    position: relative;
+  }
+
+  .search-icon, .filter-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #138496;
+    z-index: 10;
+  }
+
+  .modern-input {
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+  }
+
+  .modern-input:focus {
+    border-color: #138496 !important;
+    background-color: #f0f9fa !important;
+    box-shadow: 0 0 0 0.2rem rgba(19, 132, 150, 0.15);
+  }
+
+  .btn-filter {
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 600;
+  }
+
+  .btn-add-new {
+    padding: 10px 25px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: white;
+    color: #138496;
+    border: 2px solid white;
+  }
+
+  .btn-add-new:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255,255,255,0.3);
+    background: #f8f9fa;
+  }
+
+  .modern-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .modern-table thead tr {
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .modern-table thead th {
+    padding: 15px;
+    font-weight: 600;
+    border: none;
+    vertical-align: middle;
+  }
+
+  .modern-table tbody td {
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .table-row-hover {
+    transition: all 0.3s ease;
+  }
+
+  .table-row-hover:hover {
+    background: linear-gradient(135deg, #f0f9fa 0%, #e9ecef 100%);
+    transform: scale(1.01);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  }
+
+  .serial-number {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 30px;
+    font-weight: bold;
+    font-size: 12px;
+  }
+
+  .employee-id {
+    color: #138496;
+    font-size: 14px;
+  }
+
+  .employee-id-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    color: white;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .employee-id-highlight {
+    font-weight: 700;
+    color: #138496;
+    font-size: 1.1rem;
+  }
+
+  .profile-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+
+  .profile-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e0e0e0;
+    transition: all 0.3s ease;
+  }
+
+  .profile-img:hover {
+    transform: scale(1.1);
+    border-color: #138496;
+  }
+
+  .profile-status {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    background: #28a745;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+
+  .modern-badge {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s ease;
+  }
+
+  .badge-role-admin {
+    background: linear-gradient(135deg, #b8177a 0%, #e0204a 100%);
+    color: white;
+  }
+
+  .badge-role-hr {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c9e0 100%);
+    color: white;
+  }
+
+  .badge-role-sales {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+  }
+
+  .badge-role-developer {
+    background: linear-gradient(135deg, #007bff 0%, #0090ff 100%);
+    color: white;
+  }
+
+  .badge-role-seos {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd38 100%);
+    color: black;
+  }
+
+  .badge-role-digital_marketing {
+    background: linear-gradient(135deg, #66ff07 0%, #01dc01 100%);
+    color: black;
+  }
+
+  .badge-active {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    color: white;
+  }
+
+  .badge-inactive {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    color: white;
+  }
+
+  .badge-blocked {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    color: white;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 5px;
+  }
+
+  .btn-action {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.3s ease;
+  }
+
+  .btn-action:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .btn-action.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+  }
+
+  .btn-action.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+  }
+
+  .btn-action.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+  }
+
+  .btn-action.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+  }
+
+  .modern-modal .modal-header {
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    border-radius: 15px 15px 0 0;
+    padding: 20px;
+  }
+
+  .profile-img-large {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid #138496;
+    box-shadow: 0 5px 20px rgba(19, 132, 150, 0.3);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .section-header h5 {
+    margin: 0;
+    color: #333;
+    font-weight: 700;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+  }
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .info-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+  }
+
+  .info-item.wide {
+    grid-column: 1 / -1;
+  }
+
+  .info-item i {
+    font-size: 18px;
+  }
+
+  .info-label {
+    font-weight: 600;
+    color: #555;
+  }
+
+  .info-value {
+    color: #333;
+  }
+
+  .document-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .document-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+  }
+
+  .document-item i {
+    font-size: 24px;
+  }
+
+  .document-item span {
+    flex: 1;
+    font-weight: 600;
+  }
+
+  .modern-alert {
+    border-radius: 10px;
+    border-left: 5px solid #dc3545;
+  }
+
+  .salary-value {
+    font-weight: 600;
+    color: #28a745;
+  }
+
+  .salary-highlight {
+    font-weight: 700;
+    color: #28a745;
+    font-size: 1.1rem;
+  }
+
+  /* Password Toggle Styles */
+  .password-wrapper,
+  .password-wrapper-modal {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-toggle-password {
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: #138496;
+    transition: all 0.3s ease;
+  }
+
+  .btn-toggle-password:hover {
+    color: #20c9e0;
+    transform: scale(1.1);
+  }
+
+  .username-value {
+    font-weight: 600;
+    color: #495057;
+  }
+
+  /* Modern Pagination Styles */
+  .pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .pagination-info {
+    font-size: 14px;
+  }
+
+  .modern-pagination {
+    margin: 0;
+    gap: 5px;
+    display: flex;
+  }
+
+  .modern-pagination .page-item {
+    margin: 0;
+  }
+
+  .modern-pagination .page-link {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 10px 15px;
+    color: #138496;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: white;
+    margin: 0 2px;
+  }
+
+  .modern-pagination .page-link:hover {
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    color: white;
+    border-color: #138496;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(19, 132, 150, 0.3);
+  }
+
+  .modern-pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #138496 0%, #20c9e0 100%);
+    border-color: #138496;
+    color: white;
+    box-shadow: 0 4px 12px rgba(19, 132, 150, 0.3);
+  }
+
+  .modern-pagination .page-item.disabled .page-link {
+    background: #f8f9fa;
+    border-color: #e0e0e0;
+    color: #6c757d;
+    cursor: not-allowed;
+  }
+
+  .page-link-first,
+  .page-link-last,
+  .page-link-prev,
+  .page-link-next {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+  }
+
+  .page-jump {
+    display: flex;
+    align-items: center;
+  }
+
+  .page-jump input {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .page-jump input:focus {
+    border-color: #138496;
+    box-shadow: 0 0 0 0.2rem rgba(19, 132, 150, 0.15);
+    outline: none;
+  }
+
+  .page-jump .btn {
+    border-radius: 8px;
+    padding: 6px 12px;
+  }
+
+  /* Responsive Pagination */
+  @media (max-width: 768px) {
+    .pagination-wrapper {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .modern-pagination {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .pagination-info,
+    .page-jump {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .modern-pagination .page-link {
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+  }
+</style>
+{% endblock %}

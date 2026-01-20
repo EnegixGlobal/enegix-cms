@@ -1,0 +1,36 @@
+{% load static %}
+
+<style>
+  .footer-link {
+    text-decoration: none;
+    color: #6c757d; /* Bootstrap's text-muted */
+    transition: color 0.2s ease-in-out;
+  }
+
+  .footer-link:hover {
+    color: #0d6efd; /* Bootstrap's primary color on hover */
+  }
+</style>
+
+<footer class="footer mt-auto">
+  <div class="container-fluid d-flex flex-column align-items-center">
+
+    <small class="text-muted">
+      &copy; 2025 My Dashboard. All rights reserved.
+    </small>
+
+    <small class="text-white fw-bold bg-black p-3 mt-2" style="border-radius: 5px;">
+      Designed by:- <span class="bright">Enegix</span><span class="code">WebSolutions</span>
+    </small>
+  </div>
+
+  <!-- JS LINKS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document
+      .getElementById("sidebarToggle")
+      .addEventListener("click", function () {
+        document.body.classList.toggle("collapsed-sidebar");
+      });
+  </script>
+</footer>
