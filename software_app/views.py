@@ -3033,6 +3033,7 @@ def add_holiday(request):
     
 #     return render(request, 'holiday/holiday_list.html', context)
 
+
 @check_blocked_user
 @login_required
 @role_required(['super_admin', 'admin', 'hr'])

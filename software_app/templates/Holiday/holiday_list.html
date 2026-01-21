@@ -4,6 +4,13 @@
 {% block title %}Holiday List{% endblock %}
 
 {% block content %}
+<!-- Debugging information -->
+<script>
+console.log('Holiday List page loading...');
+console.log('Selected Year:', '{{ selected_year|default:"undefined" }}');
+console.log('Holidays Count:', '{{ holidays|length|default:"0" }}');
+</script>
+
 <div class="ribbon-header d-flex justify-content-between align-items-center px-4 pb-5 mb-3" style="color: black">
   <div class="d-flex align-items-center">
     <i class="fas fa-calendar-alt me-3 fs-2" style="color: #0152a4;"></i>
@@ -19,7 +26,7 @@
 <div class="container-fluid mt-2">
   <div class="card shadow-lg mb-4 modern-card">
     <div class="card-header table-title-bar d-flex justify-content-between align-items-center">
-      <span class="fw-bold text-white"><i class="fas fa-list-ul me-2"></i>All Holidays - {{ selected_year }}</span>
+      <span class="fw-bold text-white"><i class="fas fa-list-ul me-2"></i>All Holidays - {{ selected_year|default:"Current Year" }}</span>
       {% if request.session.role == 'super_admin' %}
       <a href="{% url 'add_holiday' %}" class="btn btn-light btn-add-new">
         <i class="fas fa-plus-circle me-2"></i>Add Holiday
@@ -51,9 +58,13 @@
             <div class="filter-box">
               <i class="fas fa-calendar filter-icon"></i>
               <select id="yearFilter" class="form-control modern-input ps-5" onchange="filterByYear()">
-                {% for year in years %}
-                <option value="{{ year.year }}" {% if year.year == selected_year %}selected{% endif %}>{{ year.year }}</option>
-                {% endfor %}
+                {% if years %}
+                  {% for year in years %}
+                  <option value="{{ year.year }}" {% if year.year == selected_year %}selected{% endif %}>{{ year.year }}</option>
+                  {% endfor %}
+                {% else %}
+                  <option value="{{ selected_year|default:2023 }}">{{ selected_year|default:2023 }}</option>
+                {% endif %}
               </select>
             </div>
           </div>
@@ -83,79 +94,81 @@
             </tr>
           </thead>
           <tbody>
-            {% for holiday in holidays %}
-            <tr class="table-row-hover">
-              <td><span class="serial-number">{{ holidays.start_index|add:forloop.counter0 }}</span></td>
-              <td><strong class="holiday-id">{{ holiday.holiday_id }}</strong></td>
-              <td><strong>{{ holiday.holiday_name }}</strong></td>
-              <td>
-                <span class="date-display">
-                  <i class="fas fa-calendar me-2 text-primary"></i>{{ holiday.holiday_date|date:"d M, Y" }}
-                </span>
-              </td>
-              <td>
-                {% if holiday.holiday_type == 'festival' %}
-                <span class="badge modern-badge badge-festival">
-                  <i class="fas fa-star me-1" style="font-size: 8px;"></i>Festival
-                </span>
-                {% elif holiday.holiday_type == 'national' %}
-                <span class="badge modern-badge badge-national">
-                  <i class="fas fa-flag me-1" style="font-size: 8px;"></i>National
-                </span>
-                {% else %}
-                <span class="badge modern-badge badge-other">
-                  <i class="fas fa-circle me-1" style="font-size: 8px;"></i>Other
-                </span>
+            {% if holidays %}
+              {% for holiday in holidays %}
+              <tr class="table-row-hover">
+                <td><span class="serial-number">{{ holidays.start_index|default:forloop.counter|add:forloop.counter0 }}</span></td>
+                <td><strong class="holiday-id">{{ holiday.holiday_id|default:"N/A" }}</strong></td>
+                <td><strong>{{ holiday.holiday_name|default:"N/A" }}</strong></td>
+                <td>
+                  <span class="date-display">
+                    <i class="fas fa-calendar me-2 text-primary"></i>{{ holiday.holiday_date|date:"d M, Y"|default:"N/A" }}
+                  </span>
+                </td>
+                <td>
+                  {% if holiday.holiday_type == 'festival' %}
+                  <span class="badge modern-badge badge-festival">
+                    <i class="fas fa-star me-1" style="font-size: 8px;"></i>Festival
+                  </span>
+                  {% elif holiday.holiday_type == 'national' %}
+                  <span class="badge modern-badge badge-national">
+                    <i class="fas fa-flag me-1" style="font-size: 8px;"></i>National
+                  </span>
+                  {% else %}
+                  <span class="badge modern-badge badge-other">
+                    <i class="fas fa-circle me-1" style="font-size: 8px;"></i>{{ holiday.holiday_type|default:"Other" }}
+                  </span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if holiday.description %}
+                  <span class="description-text">{{ holiday.description|truncatewords:10 }}</span>
+                  {% else %}
+                  <span class="text-muted">N/A</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="created-by">
+                    <strong>{{ holiday.created_by_name|default:"N/A" }}</strong>
+                    <small class="text-muted d-block">{{ holiday.created_by_role|default:"N/A" }}</small>
+                  </div>
+                </td>
+                {% if request.session.role == 'super_admin' %}
+                <td>
+                  <div class="action-buttons">
+                    <a href="{% url 'edit_holiday' holiday.id %}" class="btn btn-action btn-warning" title="Edit Holiday">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <form method="POST" action="{% url 'delete_holiday' holiday.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to permanently delete this holiday? This action cannot be undone.')">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-action btn-danger" title="Delete Holiday">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
                 {% endif %}
-              </td>
-              <td>
-                {% if holiday.description %}
-                <span class="description-text">{{ holiday.description|truncatewords:10 }}</span>
-                {% else %}
-                <span class="text-muted">N/A</span>
-                {% endif %}
-              </td>
-              <td>
-                <div class="created-by">
-                  <strong>{{ holiday.created_by_name }}</strong>
-                  <small class="text-muted d-block">{{ holiday.created_by_role }}</small>
-                </div>
-              </td>
-              {% if request.session.role == 'super_admin' %}
-              <td>
-                <div class="action-buttons">
-                  <a href="{% url 'edit_holiday' holiday.id %}" class="btn btn-action btn-warning" title="Edit Holiday">
-                    <i class="fas fa-edit"></i>
-                  </a>
-                  <form method="POST" action="{% url 'delete_holiday' holiday.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to permanently delete this holiday? This action cannot be undone.')">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-action btn-danger" title="Delete Holiday">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </form>
-                </div>
-              </td>
-              {% endif %}
-            </tr>
-            {% empty %}
+              </tr>
+              {% endfor %}
+            {% else %}
             <tr>
-              <td colspan="8" class="text-center text-muted py-5">
+              <td colspan="{% if request.session.role == 'super_admin' %}8{% else %}7{% endif %}" class="text-center text-muted py-5">
                 <i class="fas fa-calendar-times fa-3x mb-3 text-muted"></i>
-                <p>No holidays found for {{ selected_year }}.</p>
+                <p>No holidays found for {{ selected_year|default:"this year" }}.</p>
               </td>
             </tr>
-            {% endfor %}
+            {% endif %}
           </tbody>
         </table>
       </div>
 
       <!-- Modern Pagination -->
-      {% if holidays.has_other_pages %}
+      {% if holidays and holidays.has_other_pages %}
       <div class="pagination-wrapper mt-4">
         <div class="pagination-info">
           <span class="text-muted">
             <i class="fas fa-info-circle me-2"></i>
-            Showing <strong>{{ holidays.start_index }}</strong> to <strong>{{ holidays.end_index }}</strong> of <strong>{{ holidays.paginator.count }}</strong> holidays
+            Showing <strong>{{ holidays.start_index|default:1 }}</strong> to <strong>{{ holidays.end_index|default:holidays|length }}</strong> of <strong>{{ holidays.paginator.count|default:holidays|length }}</strong> holidays
           </span>
         </div>
         
@@ -164,12 +177,12 @@
             <!-- First Page -->
             {% if holidays.has_previous %}
             <li class="page-item">
-              <a class="page-link page-link-first" href="?page=1&year={{ selected_year }}" title="First Page">
+              <a class="page-link page-link-first" href="?page=1&year={{ selected_year|default:2023 }}" title="First Page">
                 <i class="fas fa-angle-double-left"></i>
               </a>
             </li>
             <li class="page-item">
-              <a class="page-link page-link-prev" href="?page={{ holidays.previous_page_number }}&year={{ selected_year }}" title="Previous Page">
+              <a class="page-link page-link-prev" href="?page={{ holidays.previous_page_number }}&year={{ selected_year|default:2023 }}" title="Previous Page">
                 <i class="fas fa-angle-left"></i>
               </a>
             </li>
@@ -194,7 +207,7 @@
                 </li>
               {% elif num > holidays.number|add:'-3' and num < holidays.number|add:'3' %}
                 <li class="page-item">
-                  <a class="page-link" href="?page={{ num }}&year={{ selected_year }}">{{ num }}</a>
+                  <a class="page-link" href="?page={{ num }}&year={{ selected_year|default:2023 }}">{{ num }}</a>
                 </li>
               {% endif %}
             {% endfor %}
@@ -202,12 +215,12 @@
             <!-- Last Page -->
             {% if holidays.has_next %}
             <li class="page-item">
-              <a class="page-link page-link-next" href="?page={{ holidays.next_page_number }}&year={{ selected_year }}" title="Next Page">
+              <a class="page-link page-link-next" href="?page={{ holidays.next_page_number }}&year={{ selected_year|default:2023 }}" title="Next Page">
                 <i class="fas fa-angle-right"></i>
               </a>
             </li>
             <li class="page-item">
-              <a class="page-link page-link-last" href="?page={{ holidays.paginator.num_pages }}&year={{ selected_year }}" title="Last Page">
+              <a class="page-link page-link-last" href="?page={{ holidays.paginator.num_pages }}&year={{ selected_year|default:2023 }}" title="Last Page">
                 <i class="fas fa-angle-double-right"></i>
               </a>
             </li>
@@ -229,7 +242,7 @@
         <!-- Page Jump -->
         <div class="page-jump">
           <span class="me-2 text-muted">Go to page:</span>
-          <input type="number" id="pageJump" class="form-control form-control-sm" min="1" max="{{ holidays.paginator.num_pages }}" placeholder="Page" style="width: 70px; display: inline-block;">
+          <input type="number" id="pageJump" class="form-control form-control-sm" min="1" max="{{ holidays.paginator.num_pages|default:1 }}" placeholder="Page" style="width: 70px; display: inline-block;">
           <button class="btn btn-sm btn-primary ms-2" onclick="jumpToPage()">
             <i class="fas fa-arrow-right"></i>
           </button>
@@ -242,56 +255,83 @@
 </div>
 
 <script>
-document.getElementById('searchInput').addEventListener('keyup', function() {
-  filterTable();
-});
+// Debugging information
+console.log('JavaScript loading...');
 
-document.getElementById('typeFilter').addEventListener('change', function() {
-  filterTable();
-});
+try {
+  document.getElementById('searchInput').addEventListener('keyup', function() {
+    console.log('Search input changed:', this.value);
+    filterTable();
+  });
 
-function filterByYear() {
-  const year = document.getElementById('yearFilter').value;
-  window.location.href = `?year=${year}`;
-}
+  document.getElementById('typeFilter').addEventListener('change', function() {
+    console.log('Type filter changed:', this.value);
+    filterTable();
+  });
 
-function filterTable() {
-  const searchValue = document.getElementById('searchInput').value.toLowerCase();
-  const typeValue = document.getElementById('typeFilter').value.toLowerCase();
-  
-  const table = document.getElementById('holidayTable');
-  const rows = table.getElementsByTagName('tr');
+  function filterByYear() {
+    console.log('Filtering by year...');
+    const year = document.getElementById('yearFilter').value;
+    console.log('Selected year:', year);
+    window.location.href = `?year=${year}`;
+  }
 
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    const cells = row.getElementsByTagName('td');
+  function filterTable() {
+    console.log('Filtering table...');
+    const searchValue = document.getElementById('searchInput').value.toLowerCase();
+    const typeValue = document.getElementById('typeFilter').value.toLowerCase();
     
-    if (cells.length > 0) {
-      const holidayName = cells[2].textContent.toLowerCase();
-      const type = cells[4].textContent.toLowerCase();
+    console.log('Search value:', searchValue);
+    console.log('Type value:', typeValue);
+    
+    const table = document.getElementById('holidayTable');
+    if (!table) {
+      console.error('Holiday table not found');
+      return;
+    }
+    
+    const rows = table.getElementsByTagName('tr');
+    console.log('Found rows:', rows.length);
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const cells = row.getElementsByTagName('td');
       
-      const matchesSearch = holidayName.includes(searchValue);
-      const matchesType = typeValue === '' || type.includes(typeValue);
-      
-      if (matchesSearch && matchesType) {
-        row.style.display = '';
-      } else {
-        row.style.display = 'none';
+      if (cells.length > 0) {
+        const holidayName = cells[2].textContent.toLowerCase();
+        const type = cells[4].textContent.toLowerCase();
+        
+        const matchesSearch = holidayName.includes(searchValue);
+        const matchesType = typeValue === '' || type.includes(typeValue);
+        
+        if (matchesSearch && matchesType) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
       }
     }
   }
-}
 
-function jumpToPage() {
-  const pageNumber = document.getElementById('pageJump').value;
-  const maxPages = {{ holidays.paginator.num_pages }};
-  const year = {{ selected_year }};
-  
-  if (pageNumber && pageNumber >= 1 && pageNumber <= maxPages) {
-    window.location.href = `?page=${pageNumber}&year=${year}`;
-  } else {
-    alert('Please enter a valid page number between 1 and ' + maxPages);
+  function jumpToPage() {
+    console.log('Jumping to page...');
+    const pageNumber = document.getElementById('pageJump').value;
+    const maxPages = {{ holidays.paginator.num_pages|default:1 }};
+    const year = {{ selected_year|default:2023 }};
+    
+    console.log('Page number:', pageNumber);
+    console.log('Max pages:', maxPages);
+    
+    if (pageNumber && pageNumber >= 1 && pageNumber <= maxPages) {
+      window.location.href = `?page=${pageNumber}&year=${year}`;
+    } else {
+      alert('Please enter a valid page number between 1 and ' + maxPages);
+    }
   }
+  
+  console.log('JavaScript loaded successfully');
+} catch (error) {
+  console.error('JavaScript error:', error);
 }
 </script>
 
