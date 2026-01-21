@@ -213,12 +213,15 @@
             </div>
           </div>
 
-          <!-- NEW: Date of Joining Field -->
+          <!-- UPDATED: Date of Joining Field -->
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label"><i class="fas fa-calendar-check me-2 text-primary"></i>Date of Joining <span class="text-danger">*</span></label>
-              <input type="date" name="joining_date" class="form-control modern-input required-field" value="{{ today }}" />
-              <small class="form-text text-muted"><i class="fas fa-info-circle me-1"></i>This date will be used to determine the training period (7 days)</small>
+              <!-- CHANGE 1: Removed the red asterisk (*) from the label -->
+              <label class="form-label"><i class="fas fa-calendar-check me-2 text-primary"></i>Date of Joining</label>
+              <!-- CHANGE 2: Removed the 'required-field' class from the input -->
+              <input type="date" name="joining_date" class="form-control modern-input" value="{{ today }}" />
+              <!-- CHANGE 3: Updated the helper text to indicate it's optional -->
+              <small class="form-text text-muted"><i class="fas fa-info-circle me-1"></i>Optional: If not provided, today's date will be used to determine the training period (7 days)</small>
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label"><i class="fas fa-info-circle me-2 text-primary"></i>Training Period</label>
@@ -532,17 +535,16 @@ document.addEventListener("DOMContentLoaded", function() {
         return false;
       }
       
-      if (!joiningDate) {
-        alert("Please enter a valid date of joining.");
-        return false;
-      }
-      
-      // Check if joining date is not in the future
-      const today = new Date();
-      const joining = new Date(joiningDate);
-      if (joining > today) {
-        alert("Date of joining cannot be in the future.");
-        return false;
+      // CHANGE 4: Updated JavaScript validation for joining date
+      // It is now optional. Only validate if a date is provided.
+      if (joiningDate) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set time to start of day for accurate comparison
+        const joining = new Date(joiningDate);
+        if (joining > today) {
+          alert("Date of joining cannot be in the future.");
+          return false;
+        }
       }
     }
 
@@ -624,7 +626,8 @@ document.addEventListener("DOMContentLoaded", function() {
             <div class="col-md-2 mb-3">
               <button type="button" class="btn btn-danger btn-sm remove-document-btn w-100">
                 <i class="fas fa-trash-alt me-1"></i> Remove
-                            </div>
+              </button>
+            </div>
           </div>
         `;
 
@@ -818,3 +821,4 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 </style>
 {% endblock %}
+
