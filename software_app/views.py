@@ -26,11 +26,11 @@ def login_view(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         
-        # 🔥 PEHLE EMPLOYEE CHECK KARO (Admin bhi ab Employee table mein hai)
+        #   PEHLE EMPLOYEE CHECK KARO (Admin bhi ab Employee table mein hai)
         try:
             employee = Employee.objects.get(username=username, is_active=True)
             
-            # 🔥 CHECK IF EMPLOYEE IS BLOCKED
+            #   CHECK IF EMPLOYEE IS BLOCKED
             if employee.is_blocked:
                 messages.error(request, f'Your account has been blocked by {employee.blocked_by.full_name} on {employee.blocked_at.strftime("%Y-%m-%d %H:%M")}. Please contact the administrator.')
                 return render(request, 'login.html')
@@ -52,7 +52,7 @@ def login_view(request):
         except Employee.DoesNotExist:
             pass
         
-        # 🔥 AGAR EMPLOYEE NAHI MILA TO SUPER ADMIN CHECK KARO (Only super_admin in AdminUser)
+        #   AGAR EMPLOYEE NAHI MILA TO SUPER ADMIN CHECK KARO (Only super_admin in AdminUser)
         try:
             admin = AdminUser.objects.get(username=username, is_active=True)
             if password == admin.password:  # Direct password match
@@ -90,7 +90,7 @@ def dashboard(request):
     user_type = request.session.get('user_type')
     user_id = request.session.get('user_id')
     
-    # 🔥 User details fetch karo
+    #   User details fetch karo
     if user_type == 'super_admin':  # Only super_admin from AdminUser table
         user = AdminUser.objects.get(id=user_id)
     else:  # All employees (admin, hr, sales, developer, seos)
@@ -116,7 +116,7 @@ def dashboard(request):
         context['interested_clients'] = Client.objects.filter(status='interested', is_active=True).count()
         
         # Department wise count (including admin)
-        context['admin_count'] = Employee.objects.filter(role='admin', is_active=True).count()  # 🔥 NEW
+        context['admin_count'] = Employee.objects.filter(role='admin', is_active=True).count()  #   NEW
         context['hr_count'] = Employee.objects.filter(role='hr', is_active=True).count()
         context['developers_count'] = Employee.objects.filter(role='developer', is_active=True).count()
         context['seo_count'] = Employee.objects.filter(role='seos', is_active=True).count()
@@ -162,7 +162,7 @@ def dashboard(request):
     
     # ==================== ADMIN DASHBOARD ====================
     elif role == 'admin':
-        # 🔥 Admin is now in Employee table, so we fetch as employee
+        #   Admin is now in Employee table, so we fetch as employee
         employee = Employee.objects.get(id=user_id)
         
         # Admin Stats (exclude other admins from team count)
@@ -230,7 +230,7 @@ def dashboard(request):
         context['pending_leaves'] = LeaveApplication.objects.filter(status='pending', is_active=True).count()
         context['unreviewed_reports'] = DailyWorkReport.objects.filter(is_reviewed=False, is_active=True).count()
         
-        # 🔥 NEW: Admin's own attendance/leave stats
+        #   NEW: Admin's own attendance/leave stats
         start_date = date(current_year, current_month, 1)
         end_date = date(current_year, current_month, calendar.monthrange(current_year, current_month)[1])
         
@@ -330,7 +330,7 @@ def dashboard(request):
         
         context['dept_attendance'] = json.dumps(dept_attendance)
         
-        # 🔥 HR's own stats
+        #   HR's own stats
         context['my_attendance_days'] = Attendance.objects.filter(
             employee=employee,
             attendance_date__range=[start_date, end_date],
@@ -956,7 +956,7 @@ def financial_dashboard(request):
         is_active=True
     ).aggregate(total=Sum('amount_pending'))['total'] or 0
     
-    # 🔥 FIXED: Salary payment summary from FundTransaction (not MonthlySalary)
+    #   FIXED: Salary payment summary from FundTransaction (not MonthlySalary)
     total_salary_paid = FundTransaction.objects.filter(
         transaction_type='salary_payment',
         is_credit=False
@@ -1210,7 +1210,7 @@ def delete_expense(request, expense_id):
 @role_required(['super_admin'])
 def add_employee(request):
     """
-    🔥 UPDATED: Manual joining date + auto training status check
+      UPDATED: Manual joining date + auto training status check
     """
     if request.method == "POST":
         try:
@@ -1243,7 +1243,7 @@ def add_employee(request):
                 base_salary = request.POST.get('base_salary')
                 resume = request.FILES.get('resume')
                 
-                # 🔥 IMPORTANT: Form से date को string के रूप में प्राप्त करें
+                #   IMPORTANT: Form से date को string के रूप में प्राप्त करें
                 joining_date_str = request.POST.get('joining_date')
                 
                 # अब इसे proper date object में convert करें
@@ -1261,7 +1261,7 @@ def add_employee(request):
                 bank_name = request.POST.get('bank_name')
                 bank_address = request.POST.get('bank_address')
 
-                # 🔥 अब आप एक proper date object पास कर रहे हैं
+                #   अब आप एक proper date object पास कर रहे हैं
                 emp = Employee.objects.create(
                     employee_id=employee_id,
                     full_name=full_name,
@@ -1305,7 +1305,7 @@ def add_employee(request):
                             document_file=file
                         )
 
-                # 🔥 Check training status
+                #   Check training status
                 emp.check_training_status()
                 
                 # अब यह line error नहीं देगी क्योंकि emp.training_start_date एक वास्तविक date object है
@@ -1360,7 +1360,7 @@ def employee_list(request):
 @role_required(['super_admin'])
 def edit_employee(request, id):
     """
-    🔥 UPDATED: Allow editing joining date + re-check training status
+      UPDATED: Allow editing joining date + re-check training status
     """
     emp = get_object_or_404(Employee, id=id)
 
@@ -1409,14 +1409,14 @@ def edit_employee(request, id):
         emp.bank_name = request.POST.get('bank_name')
         emp.bank_address = request.POST.get('bank_address')
         
-        # 🔥 Update joining date
+        #   Update joining date
         new_joining_date = request.POST.get('joining_date')
         if new_joining_date:
             emp.training_start_date = new_joining_date
 
         emp.save()
         
-        # 🔥 Re-check training status after update
+        #   Re-check training status after update
         emp.check_training_status()
 
         # Add New Documents
@@ -1550,7 +1550,7 @@ def check_username_unique(request):
     return JsonResponse({'is_unique': is_unique})
 
 
-# 🔥 NEW: EMPLOYEE ID CHECK
+#   NEW: EMPLOYEE ID CHECK
 def check_employee_id_unique(request):
     emp_id = request.GET.get('employee_id', '')
     employee_pk = request.GET.get('employee_pk', None)
@@ -2243,7 +2243,7 @@ def create_project(request, client_id):
             agreement = request.FILES.get('agreement')
             module_file = request.FILES.get('module_file')
             
-            # 🔥 NEW: Get total_amount
+            #   NEW: Get total_amount
             total_amount = request.POST.get('total_amount')
             if not total_amount or Decimal(total_amount) <= 0:
                 messages.error(request, "Please enter a valid project amount!")
@@ -2261,7 +2261,7 @@ def create_project(request, client_id):
                 module_file=module_file,
                 created_by_name=user_name,
                 created_by_role=user_role,
-                # 🔥 NEW FIELDS
+                #   NEW FIELDS
                 total_amount=total_amount,
                 amount_received=0,
                 amount_pending=total_amount,
@@ -2362,7 +2362,7 @@ def edit_project(request, id):
     
     if request.method == "POST":
         try:
-            # 🔥 NEW: Check if total_amount can be changed
+            #   NEW: Check if total_amount can be changed
             new_total = Decimal(request.POST.get('total_amount'))
             if project.amount_received > 0 and new_total != project.total_amount:
                 messages.error(request, 
@@ -2382,7 +2382,7 @@ def edit_project(request, id):
             budget = request.POST.get('budget')
             project.budget = budget if budget else None
             
-            # 🔥 NEW: Update total_amount
+            #   NEW: Update total_amount
             project.total_amount = new_total
             project.amount_pending = new_total - project.amount_received
             
@@ -2395,7 +2395,7 @@ def edit_project(request, id):
             
             project.save()
             
-            # 🔥 NEW: Recalculate payment status
+            #   NEW: Recalculate payment status
             project.update_payment_status()
             
             messages.success(request, f"✅ Project {project.project_id} updated!")
@@ -2994,87 +2994,87 @@ def add_holiday(request):
 
 
 # HOLIDAY LIST
-@check_blocked_user
-@login_required
-@role_required(['super_admin', 'admin', 'hr'])
-def holiday_list(request):
-    # Get year filter (default current year)
-    current_year = datetime.now().year
-    year_filter = request.GET.get('year', current_year)
-    
-    # Fetch holidays for selected year
-    # CHANGE: Removed is_active=True filter because we are now permanently deleting records.
-    holidays_list = HolidayMaster.objects.filter(
-        holiday_date__year=year_filter
-    ).order_by('holiday_date')
-    
-    # Get available years for filter
-    years = HolidayMaster.objects.dates('holiday_date', 'year', order='DESC')
-    
-    # Pagination
-    paginator = Paginator(holidays_list, 10)  # Show 10 holidays per page
-    page = request.GET.get('page')
-    
-    try:
-        holidays = paginator.page(page)
-    except PageNotAnInteger:
-        # If page is not an integer, deliver first page
-        holidays = paginator.page(1)
-    except EmptyPage:
-        # If page is out of range, deliver last page
-        holidays = paginator.page(paginator.num_pages)
-    
-    context = {
-        'holidays': holidays,
-        'years': years,
-        'selected_year': int(year_filter),
-        'current_year': current_year
-    }
-    
-    return render(request, 'Holiday/holiday_list.html', context)
-
-
 # @check_blocked_user
 # @login_required
 # @role_required(['super_admin', 'admin', 'hr'])
 # def holiday_list(request):
+#     # Get year filter (default current year)
 #     current_year = datetime.now().year
-
-#     # ✅ FIX 1: year ko hamesha int banao
-#     try:
-#         year_filter = int(request.GET.get('year', current_year))
-#     except ValueError:
-#         year_filter = current_year
-
+#     year_filter = request.GET.get('year', current_year)
+    
 #     # Fetch holidays for selected year
+#     # CHANGE: Removed is_active=True filter because we are now permanently deleting records.
 #     holidays_list = HolidayMaster.objects.filter(
 #         holiday_date__year=year_filter
 #     ).order_by('holiday_date')
-
-#     # Available years
+    
+#     # Get available years for filter
 #     years = HolidayMaster.objects.dates('holiday_date', 'year', order='DESC')
-
+    
 #     # Pagination
-#     paginator = Paginator(holidays_list, 10)
-
-#     # ✅ FIX 2: default page = 1
-#     page = request.GET.get('page', 1)
-
+#     paginator = Paginator(holidays_list, 10)  # Show 10 holidays per page
+#     page = request.GET.get('page')
+    
 #     try:
 #         holidays = paginator.page(page)
 #     except PageNotAnInteger:
+#         # If page is not an integer, deliver first page
 #         holidays = paginator.page(1)
 #     except EmptyPage:
+#         # If page is out of range, deliver last page
 #         holidays = paginator.page(paginator.num_pages)
-
+    
 #     context = {
 #         'holidays': holidays,
 #         'years': years,
-#         'selected_year': year_filter,   # already int
+#         'selected_year': int(year_filter),
 #         'current_year': current_year
 #     }
-
+    
 #     return render(request, 'Holiday/holiday_list.html', context)
+
+
+@check_blocked_user
+@login_required
+@role_required(['super_admin', 'admin', 'hr'])
+def holiday_list(request):
+    current_year = datetime.now().year
+
+    # ✅ FIX 1: year ko hamesha int banao
+    try:
+        year_filter = int(request.GET.get('year', current_year))
+    except ValueError:
+        year_filter = current_year
+
+    # Fetch holidays for selected year
+    holidays_list = HolidayMaster.objects.filter(
+        holiday_date__year=year_filter
+    ).order_by('holiday_date')
+
+    # Available years
+    years = HolidayMaster.objects.dates('holiday_date', 'year', order='DESC')
+
+    # Pagination
+    paginator = Paginator(holidays_list, 10)
+
+    # ✅ FIX 2: default page = 1
+    page = request.GET.get('page', 1)
+
+    try:
+        holidays = paginator.page(page)
+    except PageNotAnInteger:
+        holidays = paginator.page(1)
+    except EmptyPage:
+        holidays = paginator.page(paginator.num_pages)
+
+    context = {
+        'holidays': holidays,
+        'years': years,
+        'selected_year': year_filter,   # already int
+        'current_year': current_year
+    }
+
+    return render(request, 'Holiday/holiday_list.html', context)
 
 
 
@@ -3192,7 +3192,7 @@ def apply_leave(request):
         }
     )
     
-    # 🔥 AUTO-RESET: Check if month/year changed
+    #   AUTO-RESET: Check if month/year changed
     now = timezone.now()
     if leave_balance.current_month != now.month or leave_balance.current_year != now.year:
         # New month = reset casual counter
@@ -3249,7 +3249,7 @@ def apply_leave(request):
             if leave_type == 'casual':
                 casual_requested = total_days
                 
-                # 🔥 JUST SHOW INFO MESSAGE, DON'T BLOCK SUBMISSION
+                #   JUST SHOW INFO MESSAGE, DON'T BLOCK SUBMISSION
                 if casual_requested > casual_available_this_month:
                     unpaid = casual_requested - casual_available_this_month
                     messages.warning(request, 
@@ -3260,7 +3260,7 @@ def apply_leave(request):
             elif leave_type == 'sick':
                 sick_requested = total_days
                 
-                # 🔥 JUST SHOW INFO MESSAGE, DON'T BLOCK
+                #   JUST SHOW INFO MESSAGE, DON'T BLOCK
                 if sick_requested > sick_available:
                     unpaid = sick_requested - int(sick_available)
                     messages.warning(request, 
@@ -3291,7 +3291,7 @@ def apply_leave(request):
                         f"⚠️ Sick: {sick_requested - int(sick_available)} day(s) will be UNPAID"
                     )
             
-            # 🔥 CREATE APPLICATION - NO MORE BLOCKING
+            #   CREATE APPLICATION - NO MORE BLOCKING
             LeaveApplication.objects.create(
                 employee=employee,
                 employee_id_display=employee.employee_id,
@@ -3374,7 +3374,7 @@ def pending_leave_requests(request):
 #             sick_to_deduct = leave_app.sick_days_requested
 #             unpaid_days = 0
             
-#             # 🔥 Deduct Casual (check monthly limit)
+#             #   Deduct Casual (check monthly limit)
 #             if casual_to_deduct > 0:
 #                 # Get available casual for the month of leave application
 #                 now = timezone.now()
@@ -3395,7 +3395,7 @@ def pending_leave_requests(request):
 #                     leave_app.casual_days_deducted = available_casual
 #                     unpaid_days += (casual_to_deduct - available_casual)
             
-#             # 🔥 Deduct Sick
+#             #   Deduct Sick
 #             if sick_to_deduct > 0:
 #                 available_sick = float(leave_balance.sick_leave_balance)
                 
@@ -3411,7 +3411,7 @@ def pending_leave_requests(request):
 #             leave_app.unpaid_days = unpaid_days
 #             leave_balance.save()
             
-#             # 🔥 CREATE ATTENDANCE: Paid = 'L', Unpaid = 'A'
+#             #   CREATE ATTENDANCE: Paid = 'L', Unpaid = 'A'
 #             current_date = leave_app.from_date
 #             days_processed = 0
 #             paid_days_remaining = leave_app.casual_days_deducted + leave_app.sick_days_deducted
@@ -3421,7 +3421,7 @@ def pending_leave_requests(request):
 #                     if not HolidayMaster.objects.filter(holiday_date=current_date, is_active=True).exists():
 #                         days_processed += 1
                         
-#                         # 🔥 LOGIC: First N days = Paid (L), Rest = Unpaid (A)
+#                         #   LOGIC: First N days = Paid (L), Rest = Unpaid (A)
 #                         if days_processed <= paid_days_remaining:
 #                             status = 'on_leave'  # Paid leave
 #                         else:
@@ -3477,7 +3477,7 @@ def pending_leave_requests(request):
 @role_required(['hr', 'admin', 'super_admin'])
 def approve_reject_leave(request, id):
     """
-    🔥 UPDATED: Approve/Reject with LWP logic
+      UPDATED: Approve/Reject with LWP logic
     - Paid leaves → 'on_leave' (L)
     - Unpaid leaves → 'lwp' (LWP) instead of 'absent'
     """
@@ -3494,7 +3494,7 @@ def approve_reject_leave(request, id):
             sick_to_deduct = leave_app.sick_days_requested
             unpaid_days = 0
             
-            # 🔥 Deduct Casual (check monthly limit)
+            #   Deduct Casual (check monthly limit)
             if casual_to_deduct > 0:
                 now = timezone.now()
                 if leave_balance.current_month != now.month or leave_balance.current_year != now.year:
@@ -3513,7 +3513,7 @@ def approve_reject_leave(request, id):
                     leave_app.casual_days_deducted = available_casual
                     unpaid_days += (casual_to_deduct - available_casual)
             
-            # 🔥 Deduct Sick
+            #   Deduct Sick
             if sick_to_deduct > 0:
                 available_sick = float(leave_balance.sick_leave_balance)
                 
@@ -3528,7 +3528,7 @@ def approve_reject_leave(request, id):
             leave_app.unpaid_days = unpaid_days
             leave_balance.save()
             
-            # 🔥 CREATE ATTENDANCE: Paid = 'on_leave' (L), Unpaid = 'lwp' (LWP)
+            #   CREATE ATTENDANCE: Paid = 'on_leave' (L), Unpaid = 'lwp' (LWP)
             current_date = leave_app.from_date
             days_processed = 0
             paid_days_remaining = leave_app.casual_days_deducted + leave_app.sick_days_deducted
@@ -3538,12 +3538,12 @@ def approve_reject_leave(request, id):
                     if not HolidayMaster.objects.filter(holiday_date=current_date, is_active=True).exists():
                         days_processed += 1
                         
-                        # 🔥 LOGIC: First N days = Paid (L), Rest = Unpaid (LWP)
+                        #   LOGIC: First N days = Paid (L), Rest = Unpaid (LWP)
                         if days_processed <= paid_days_remaining:
                             status = 'on_leave'  # Paid leave
                             remark = f'Paid leave approved by {request.session.get("full_name")}'
                         else:
-                            status = 'lwp'  # 🔥 CHANGED: Use LWP instead of absent
+                            status = 'lwp'  #   CHANGED: Use LWP instead of absent
                             remark = f'Leave Without Pay (no balance) - approved by {request.session.get("full_name")}'
                         
                         Attendance.objects.update_or_create(
@@ -3914,7 +3914,7 @@ def punch_attendance(request):
 @role_required(['hr', 'sales', 'developer', 'seos','digital_marketing' ,'admin'])
 def process_punch(request):
     """
-    🔥 UPDATED: Training status check + auto-complete after 7 actual training days
+      UPDATED: Training status check + auto-complete after 7 actual training days
     """
     if request.method == "POST":
         try:
@@ -4009,7 +4009,7 @@ def process_punch(request):
                 distance_from_office=Decimal(str(distance))
             )
 
-            # 🔥 CHECK-IN: Auto-mark Training if in training period
+            #   CHECK-IN: Auto-mark Training if in training period
             if punch_type == 'check_in':
                 employee.check_training_status()  # Update training status
                 
@@ -4047,12 +4047,12 @@ def process_punch(request):
                         is_lunch_break=is_lunch
                     )
 
-            # 🔥 CHECK-OUT: Calculate attendance (only if NOT training)
+            #   CHECK-OUT: Calculate attendance (only if NOT training)
             if punch_type == 'check_out':
                 if not employee.is_in_training:
                     calculate_attendance(employee, punch.punch_date)
                 else:
-                    # 🔥 Training complete? Check again after checkout
+                    #   Training complete? Check again after checkout
                     employee.check_training_status()
                     
                     # If training just completed, show message
@@ -4596,7 +4596,7 @@ def salary_sheet(request):
 # @role_required(['admin', 'super_admin', 'hr'])
 # def get_salary_data(request):
 #     """
-#     🔥 UPDATED: 
+#       UPDATED: 
 #     1. Dynamic per day calculation (28/30/31 days)
 #     2. Training days paid at ₹100/day
 #     3. Holiday (H) and Leave (L) are PAID
@@ -4639,7 +4639,7 @@ def salary_sheet(request):
 #     else:
 #         end_date = date(year, month, calendar.monthrange(year, month)[1])
     
-#     # 🔥 Get total days in this month (28/30/31)
+#     #   Get total days in this month (28/30/31)
 #     days_in_month = calendar.monthrange(year, month)[1]
     
 #     data = []
@@ -4651,7 +4651,7 @@ def salary_sheet(request):
 #             attendance_date__range=[start_date, end_date]
 #         )
         
-#         # 🔥 Count by status
+#         #   Count by status
 #         present = attendance_records.filter(status='present').count()
 #         absent = attendance_records.filter(status='absent').count()
 #         half_days = attendance_records.filter(status='half_day').count()
@@ -4689,7 +4689,7 @@ def salary_sheet(request):
 #         else:
 #             base_salary = 0.0
         
-#         # 🔥 Calculate per_day based on days in month
+#         #   Calculate per_day based on days in month
 #         per_day = round(base_salary / days_in_month, 2) if base_salary > 0 else 0.0
         
 #         if existing_salary:
@@ -4704,9 +4704,9 @@ def salary_sheet(request):
 #                 'total_absent': absent,
 #                 'total_half_days': half_days,
 #                 'total_leaves': leaves,
-#                 'total_holidays': holidays,  # 🔥 NEW
-#                 'total_lwp': lwp,  # 🔥 NEW
-#                 'total_training': training,  # 🔥 NEW
+#                 'total_holidays': holidays,  #   NEW
+#                 'total_lwp': lwp,  #   NEW
+#                 'total_training': training,  #   NEW
 #                 'bonus': float(existing_salary.bonus),
 #                 'travel_allowance': float(existing_salary.travel_allowance),
 #                 'pf_percent': float(existing_salary.pf_percent) if existing_salary.pf_percent > 0 else 0.0,
@@ -4735,9 +4735,9 @@ def salary_sheet(request):
 #                 'total_absent': absent,
 #                 'total_half_days': half_days,
 #                 'total_leaves': leaves,
-#                 'total_holidays': holidays,  # 🔥 NEW
-#                 'total_lwp': lwp,  # 🔥 NEW
-#                 'total_training': training,  # 🔥 NEW
+#                 'total_holidays': holidays,  #   NEW
+#                 'total_lwp': lwp,  #   NEW
+#                 'total_training': training,  #   NEW
 #                 'bonus': 0.0,
 #                 'travel_allowance': 0.0,
 #                 'pf_percent': 0.0,
@@ -4763,7 +4763,7 @@ def salary_sheet(request):
 @role_required(['admin', 'super_admin', 'hr'])
 def get_salary_data(request):
     """
-    🔥 UPDATED: Dynamic per day calculation (28/30/31 days)
+      UPDATED: Dynamic per day calculation (28/30/31 days)
     """
     month_year = request.GET.get('month')
     
@@ -4800,7 +4800,7 @@ def get_salary_data(request):
     else:
         end_date = date(year, month, calendar.monthrange(year, month)[1])
     
-    # 🔥 Get total days in this month (28/30/31)
+    #   Get total days in this month (28/30/31)
     days_in_month = calendar.monthrange(year, month)[1]
     
     data = []
@@ -4849,7 +4849,7 @@ def get_salary_data(request):
         else:
             base_salary = 0.0
         
-        # 🔥 UPDATED: Calculate per_day based on days in month
+        #   UPDATED: Calculate per_day based on days in month
         per_day = round(base_salary / days_in_month, 2) if base_salary > 0 else 0.0
         
         if existing_salary:
@@ -5018,7 +5018,7 @@ def get_salary_data(request):
 #                 paid_amount = Decimal(str(row.get('paid_amount', 0)))
 #                 payment_date = row.get('payment_date') or None
                 
-#                 # 🔥 NEW LOGIC: If re-approving and auto_pay enabled
+#                 #   NEW LOGIC: If re-approving and auto_pay enabled
 #                 if existing_salary and auto_pay and existing_salary.payment_from_funds:
 #                     # ✅ REFUND OLD PAYMENT FIRST
 #                     old_transaction = existing_salary.fund_transaction
@@ -5043,7 +5043,7 @@ def get_salary_data(request):
 #                     existing_salary.payment_from_funds = False
 #                     existing_salary.save()
                 
-#                 # 🔥 NOW PROCEED WITH PAYMENT
+#                 #   NOW PROCEED WITH PAYMENT
 #                 if auto_pay and net_payable > 0:
 #                     if company_funds.total_funds >= net_payable:
 #                         # Create or use existing salary object
@@ -5224,7 +5224,7 @@ def get_salary_data(request):
 @role_required(['admin', 'super_admin', 'hr'])
 def save_salary_data(request):
     """
-    🔥 UPDATED: Dynamic per day calculation
+      UPDATED: Dynamic per day calculation
     """
     if request.method != "POST":
         return JsonResponse({'status': 'error', 'message': 'Invalid request'})
@@ -5242,7 +5242,7 @@ def save_salary_data(request):
         year = int(year)
         month = int(month)
         
-        # 🔥 UPDATED: Get days in this month dynamically
+        #   UPDATED: Get days in this month dynamically
         days_in_month = calendar.monthrange(year, month)[1]
         
         # Check if attendance is approved
@@ -5283,7 +5283,7 @@ def save_salary_data(request):
                 except Employee.DoesNotExist:
                     continue
                 
-                # 🔥 UPDATED: Calculate per_day based on month days
+                #   UPDATED: Calculate per_day based on month days
                 base_salary = Decimal(str(row['base_salary']))
                 per_day_salary = base_salary / Decimal(str(days_in_month))
                 
