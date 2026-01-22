@@ -3031,7 +3031,7 @@ def holiday_list(request):
         'current_year': current_year
     }
     
-    return render(request, 'holiday/holiday_list.html', context)
+    return render(request, 'Holiday/holiday_list.html', context)
 
 
 # @check_blocked_user
