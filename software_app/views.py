@@ -2994,87 +2994,87 @@ def add_holiday(request):
 
 
 # HOLIDAY LIST
-# @check_blocked_user
-# @login_required
-# @role_required(['super_admin', 'admin', 'hr'])
-# def holiday_list(request):
-#     # Get year filter (default current year)
-#     current_year = datetime.now().year
-#     year_filter = request.GET.get('year', current_year)
-    
-#     # Fetch holidays for selected year
-#     # CHANGE: Removed is_active=True filter because we are now permanently deleting records.
-#     holidays_list = HolidayMaster.objects.filter(
-#         holiday_date__year=year_filter
-#     ).order_by('holiday_date')
-    
-#     # Get available years for filter
-#     years = HolidayMaster.objects.dates('holiday_date', 'year', order='DESC')
-    
-#     # Pagination
-#     paginator = Paginator(holidays_list, 10)  # Show 10 holidays per page
-#     page = request.GET.get('page')
-    
-#     try:
-#         holidays = paginator.page(page)
-#     except PageNotAnInteger:
-#         # If page is not an integer, deliver first page
-#         holidays = paginator.page(1)
-#     except EmptyPage:
-#         # If page is out of range, deliver last page
-#         holidays = paginator.page(paginator.num_pages)
-    
-#     context = {
-#         'holidays': holidays,
-#         'years': years,
-#         'selected_year': int(year_filter),
-#         'current_year': current_year
-#     }
-    
-#     return render(request, 'holiday/holiday_list.html', context)
-
-
 @check_blocked_user
 @login_required
 @role_required(['super_admin', 'admin', 'hr'])
 def holiday_list(request):
+    # Get year filter (default current year)
     current_year = datetime.now().year
-
-    # ✅ FIX 1: year ko hamesha int banao
-    try:
-        year_filter = int(request.GET.get('year', current_year))
-    except ValueError:
-        year_filter = current_year
-
+    year_filter = request.GET.get('year', current_year)
+    
     # Fetch holidays for selected year
+    # CHANGE: Removed is_active=True filter because we are now permanently deleting records.
     holidays_list = HolidayMaster.objects.filter(
         holiday_date__year=year_filter
     ).order_by('holiday_date')
-
-    # Available years
+    
+    # Get available years for filter
     years = HolidayMaster.objects.dates('holiday_date', 'year', order='DESC')
-
+    
     # Pagination
-    paginator = Paginator(holidays_list, 10)
-
-    # ✅ FIX 2: default page = 1
-    page = request.GET.get('page', 1)
-
+    paginator = Paginator(holidays_list, 10)  # Show 10 holidays per page
+    page = request.GET.get('page')
+    
     try:
         holidays = paginator.page(page)
     except PageNotAnInteger:
+        # If page is not an integer, deliver first page
         holidays = paginator.page(1)
     except EmptyPage:
+        # If page is out of range, deliver last page
         holidays = paginator.page(paginator.num_pages)
-
+    
     context = {
         'holidays': holidays,
         'years': years,
-        'selected_year': year_filter,   # already int
+        'selected_year': int(year_filter),
         'current_year': current_year
     }
-
+    
     return render(request, 'holiday/holiday_list.html', context)
+
+
+# @check_blocked_user
+# @login_required
+# @role_required(['super_admin', 'admin', 'hr'])
+# def holiday_list(request):
+#     current_year = datetime.now().year
+
+#     # ✅ FIX 1: year ko hamesha int banao
+#     try:
+#         year_filter = int(request.GET.get('year', current_year))
+#     except ValueError:
+#         year_filter = current_year
+
+#     # Fetch holidays for selected year
+#     holidays_list = HolidayMaster.objects.filter(
+#         holiday_date__year=year_filter
+#     ).order_by('holiday_date')
+
+#     # Available years
+#     years = HolidayMaster.objects.dates('holiday_date', 'year', order='DESC')
+
+#     # Pagination
+#     paginator = Paginator(holidays_list, 10)
+
+#     # ✅ FIX 2: default page = 1
+#     page = request.GET.get('page', 1)
+
+#     try:
+#         holidays = paginator.page(page)
+#     except PageNotAnInteger:
+#         holidays = paginator.page(1)
+#     except EmptyPage:
+#         holidays = paginator.page(paginator.num_pages)
+
+#     context = {
+#         'holidays': holidays,
+#         'years': years,
+#         'selected_year': year_filter,   # already int
+#         'current_year': current_year
+#     }
+
+#     return render(request, 'Holiday/holiday_list.html', context)
 
 
 
