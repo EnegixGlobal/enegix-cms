@@ -38,7 +38,7 @@
         justify-content: center;
         min-height: 100vh;
         padding: 20px;
-        overflow: hidden;
+        overflow-x: hidden;
       }
 
       /* Animated wave background */
@@ -443,6 +443,7 @@
         flex-direction: column;
         justify-content: center;
         background: #ffffff;
+        overflow-y: auto;
       }
 
       .form-header {
@@ -621,11 +622,12 @@
         .login-wrapper {
           flex-direction: column;
           max-width: 500px;
+          min-height: auto;
         }
 
         .illustration-section {
-          padding: 50px 40px;
-          min-height: 400px;
+          padding: 40px 30px;
+          min-height: 300px;
         }
 
         .laptop-container {
@@ -646,7 +648,8 @@
         }
 
         .form-section {
-          padding: 50px 40px;
+          padding: 40px 30px;
+          min-height: auto;
         }
 
         .form-header h2 {
@@ -656,16 +659,23 @@
 
       @media (max-width: 576px) {
         body {
-          padding: 15px;
+          padding: 10px;
+          align-items: flex-start;
+          padding-top: 20px;
+          padding-bottom: 20px;
         }
 
         .login-wrapper {
           border-radius: 20px;
+          width: 100%;
+          max-width: 100%;
+          min-height: auto;
+          margin-bottom: 20px;
         }
 
         .illustration-section {
-          padding: 40px 30px;
-          min-height: 350px;
+          padding: 30px 20px;
+          min-height: 250px;
         }
 
         .laptop-container {
@@ -694,7 +704,13 @@
         }
 
         .form-section {
-          padding: 40px 30px;
+          padding: 30px 20px;
+          min-height: auto;
+          justify-content: flex-start;
+        }
+
+        .form-header {
+          margin-bottom: 25px;
         }
 
         .form-header h2 {
@@ -703,6 +719,15 @@
 
         .form-control {
           padding: 14px 16px 14px 48px;
+        }
+
+        .form-group {
+          margin-bottom: 20px;
+        }
+
+        .btn-login {
+          padding: 14px;
+          margin-top: 5px;
         }
       }
     </style>
