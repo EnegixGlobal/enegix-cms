@@ -245,7 +245,7 @@ class Employee(models.Model):
     
     # 🔥 Training tracking
     is_in_training = models.BooleanField(
-        default=True,
+        default=False,
         help_text="First 7 ACTUAL training days (excluding holidays/absents)"
     )
     training_start_date = models.DateField(
@@ -1368,63 +1368,6 @@ class AttendanceStatusChangeLog(models.Model):
     def __str__(self):
         return f"{self.employee.full_name} - {self.attendance_date} - {self.old_status} to {self.new_status}"
 
-
-# class AttendanceStatusChangeLog(models.Model):
-#     """
-#     Logs all attendance status changes with reason and who made the change
-#     """
-#     STATUS_CHOICES = [
-#         ('present', 'Present'),
-#         ('half_day', 'Half Day'),
-#         ('absent', 'Absent'),
-#         ('on_leave', 'On Leave'),
-#         ('holiday', 'Holiday'),
-#     ]
-    
-#     attendance = models.ForeignKey(
-#         'Attendance',
-#         on_delete=models.CASCADE,
-#         related_name='status_changes'
-#     )
-#     employee = models.ForeignKey(
-#         'Employee',
-#         on_delete=models.CASCADE,
-#         related_name='attendance_status_changes'
-#     )
-#     attendance_date = models.DateField()
-    
-#     old_status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-#     new_status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-#     reason = models.TextField()
-    
-#     # Track who made the change
-#     changed_by_employee = models.ForeignKey(
-#         'Employee',
-#         on_delete=models.SET_NULL,
-#         null=True,
-#         blank=True,
-#         related_name='attendance_changes_made'
-#     )
-#     changed_by_admin = models.ForeignKey(
-#         'AdminUser',
-#         on_delete=models.SET_NULL,
-#         null=True,
-#         blank=True,
-#         related_name='attendance_changes_made'
-#     )
-#     changed_by_name = models.CharField(max_length=200)
-#     changed_by_role = models.CharField(max_length=50)
-    
-#     changed_at = models.DateTimeField(auto_now_add=True)
-    
-#     class Meta:
-#         db_table = 'attendance_status_change_logs'
-#         ordering = ['-changed_at']
-#         verbose_name = 'Attendance Status Change Log'
-#         verbose_name_plural = 'Attendance Status Change Logs'
-    
-#     def __str__(self):
-#         return f"{self.employee.full_name} - {self.attendance_date} - {self.old_status} to {self.new_status}"
 
 
 

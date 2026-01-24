@@ -135,7 +135,7 @@
             </div>
           </div>
 
-          <!-- Geofence Info -->
+          <!-- 🔥 FIXED: Geofence Info with Safe Defaults -->
           <div class="alert alert-info mt-4 mb-0">
             <div class="row align-items-center">
               <div class="col-md-8">
@@ -143,8 +143,13 @@
                   <i class="fas fa-map-pin me-2"></i>Geofencing Active
                 </h6>
                 <p class="mb-0">
-                  <strong>Office Location:</strong> Lat: {{ config.latitude|default:"23.351633" }}, Long: {{ config.longitude|default:"85.3162779" }}<br>
-                  <strong>Allowed Radius:</strong> {{ config.radius_meters|default:"80" }} meters<br>
+                  <strong>Office Location:</strong> 
+                  Lat: {% if config and config.latitude %}{{ config.latitude|floatformat:6 }}{% else %}23.351633{% endif %}, 
+                  Long: {% if config and config.longitude %}{{ config.longitude|floatformat:6 }}{% else %}85.3162779{% endif %}<br>
+                  
+                  <strong>Allowed Radius:</strong> 
+                  {% if config and config.radius_meters %}{{ config.radius_meters }}{% else %}80{% endif %} meters<br>
+                  
                   <small class="text-muted">You must be within the geofence to punch attendance</small>
                 </p>
               </div>
@@ -302,6 +307,7 @@
                 <li><strong>Present (P):</strong> Work ≥ 7 hours</li>
                 <li><strong>Half Day (HD):</strong> Work < 7 hours OR late check-in</li>
                 <li><strong>Absent (A):</strong> No check-in/check-out</li>
+                <li><strong>Training (T):</strong> First 7 days @ ₹100/day</li>
                 <li><strong>Break Deduction:</strong> All breaks deducted from work hours</li>
               </ul>
             </div>
@@ -327,12 +333,36 @@
   </div>
 </div>
 
+<style>
+.punch-btn {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s;
+}
+
+.punch-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.punch-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>
+
 <script>
+// 🔥 FIXED: Safe default values with proper null checks
 let userLatitude = null;
 let userLongitude = null;
-const officeLatitude = {{ config.latitude|default:"23.351633" }};
-const officeLongitude = {{ config.longitude|default:"85.3162779" }};
-const allowedRadius = {{ config.radius_meters|default:"80" }};
+
+// ✅ Use config values if available, otherwise use defaults
+const officeLatitude = {% if config and config.latitude %}{{ config.latitude }}{% else %}23.351633{% endif %};
+const officeLongitude = {% if config and config.longitude %}{{ config.longitude }}{% else %}85.3162779{% endif %};
+const allowedRadius = {% if config and config.radius_meters %}{{ config.radius_meters }}{% else %}80{% endif %};
 
 // 🔥 Global loading modal reference
 let loadingModal = null;
@@ -364,7 +394,7 @@ function getUserLocation() {
   
   if (!navigator.geolocation) {
     locationStatus.innerHTML = '<span class="badge bg-danger">Not Supported</span>';
-    alert('❌ Geolocation is not supported by your browser!');
+    console.error('Geolocation not supported');
     return;
   }
   
@@ -377,6 +407,7 @@ function getUserLocation() {
       
       console.log('User Location:', userLatitude, userLongitude);
       console.log('Office Location:', officeLatitude, officeLongitude);
+      console.log('Allowed Radius:', allowedRadius);
       
       const distance = calculateDistance(
         userLatitude, userLongitude,
@@ -441,7 +472,8 @@ document.querySelectorAll('.punch-btn').forEach(button => {
   button.addEventListener('click', function() {
     const punchType = this.dataset.punchType;
     
-    if (!userLatitude || !userLongitude) {
+    // ✅ Check if location is available
+    if (userLatitude === null || userLongitude === null) {
       alert('❌ Location not available. Please wait while we get your location...');
       getUserLocation();
       return;
@@ -454,6 +486,7 @@ document.querySelectorAll('.punch-btn').forEach(button => {
     
     console.log('Punch attempt - Distance:', distance, 'Allowed:', allowedRadius);
     
+    // ✅ Check geofence
     if (distance > allowedRadius) {
       alert(`❌ You are ${Math.round(distance)}m away from office.\nYou must be within ${allowedRadius}m to punch!`);
       return;
@@ -473,7 +506,7 @@ document.querySelectorAll('.punch-btn').forEach(button => {
     
     if (!confirm(confirmMsg)) return;
     
-    // 🔥 FIX: Show loading modal properly
+    // 🔥 Show loading modal properly
     const modalElement = document.getElementById('loadingModal');
     loadingModal = new bootstrap.Modal(modalElement);
     loadingModal.show();
@@ -485,13 +518,13 @@ document.querySelectorAll('.punch-btn').forEach(button => {
     formData.append('longitude', userLongitude);
     formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
     
-    // 🔥 FIX: Improved fetch with guaranteed modal hide
+    // 🔥 Improved fetch with guaranteed modal hide
     fetch("{% url 'process_punch' %}", {
       method: "POST",
       body: formData
     })
     .then(response => {
-      // 🔥 ALWAYS hide modal first, regardless of response
+      // ✅ ALWAYS hide modal first
       hideLoadingModal();
       
       if (!response.ok) {
@@ -501,14 +534,19 @@ document.querySelectorAll('.punch-btn').forEach(button => {
     })
     .then(data => {
       if (data.success) {
-        alert('✅ ' + data.message);
+        // 🔥 Check if training completed
+        if (data.training_completed) {
+          alert('🎉 ' + data.message);
+        } else {
+          alert('✅ ' + data.message);
+        }
         location.reload();
       } else {
         alert('❌ ' + data.message);
       }
     })
     .catch(error => {
-      // 🔥 ALWAYS hide modal on error too
+      // ✅ ALWAYS hide modal on error
       hideLoadingModal();
       console.error('Error:', error);
       alert('❌ Connection failed. Please try again.');
@@ -516,26 +554,5 @@ document.querySelectorAll('.punch-btn').forEach(button => {
   });
 });
 </script>
-
-<style>
-.punch-btn {
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  transition: all 0.3s;
-}
-
-.punch-btn:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-}
-
-.punch-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-</style>
 
 {% endblock %}

@@ -1205,12 +1205,139 @@ def delete_expense(request, expense_id):
 # ------------------------ Employee ----------------------
 
 # ADD EMPLOYEE (with Manual Employee ID Entry)
+# @check_blocked_user
+# @login_required
+# @role_required(['super_admin'])
+# def add_employee(request):
+#     """
+#       UPDATED: Manual joining date + auto training status check
+#     """
+#     if request.method == "POST":
+#         try:
+#             with transaction.atomic():
+#                 # Step 1 - Basic Info
+#                 employee_id = request.POST.get('employee_id')
+#                 full_name = request.POST.get('full_name')
+#                 email = request.POST.get('email')
+#                 mobile = request.POST.get('mobile')
+#                 dob = request.POST.get('dob')
+#                 gender = request.POST.get('gender')
+#                 profile_pic = request.FILES.get('profile_pic')
+#                 username = request.POST.get('username')
+#                 password = request.POST.get('password')
+
+#                 # Step 2 - Address
+#                 address_line = request.POST.get('address_line')
+#                 city = request.POST.get('city')
+#                 state = request.POST.get('state')
+#                 pincode = request.POST.get('pincode')
+
+#                 # Step 3 - Emergency Contact
+#                 emergency_name = request.POST.get('emergency_contact_name')
+#                 emergency_number = request.POST.get('emergency_contact_number')
+#                 emergency_relation = request.POST.get('emergency_contact_relation')
+
+#                 # Step 4 - Professional Details
+#                 role = request.POST.get('role')
+#                 designation = request.POST.get('designation')
+#                 base_salary = request.POST.get('base_salary')
+#                 resume = request.FILES.get('resume')
+                
+#                 #   IMPORTANT: Form से date को string के रूप में प्राप्त करें
+#                 joining_date_str = request.POST.get('joining_date')
+                
+#                 # अब इसे proper date object में convert करें
+#                 if joining_date_str:
+#                     # अगर date दी गई है, तो string को date में बदलें
+#                     joining_date = datetime.strptime(joining_date_str, '%Y-%m-%d').date()
+#                 else:
+#                     # अगर date नहीं दी गई है, तो आज की date का उपयोग करें
+#                     joining_date = date.today()
+                
+#                 # Step 5 - Bank Details
+#                 account_number = request.POST.get('account_number')
+#                 ifsc_code = request.POST.get('ifsc_code')
+#                 account_holder_name = request.POST.get('account_holder_name')
+#                 bank_name = request.POST.get('bank_name')
+#                 bank_address = request.POST.get('bank_address')
+
+#                 #   अब आप एक proper date object पास कर रहे हैं
+#                 emp = Employee.objects.create(
+#                     employee_id=employee_id,
+#                     full_name=full_name,
+#                     email=email,
+#                     mobile=mobile,
+#                     dob=dob,
+#                     gender=gender,
+#                     profile_pic=profile_pic,
+#                     username=username,
+#                     password=password,
+#                     address_line=address_line,
+#                     city=city,
+#                     state=state,
+#                     pincode=pincode,
+#                     emergency_contact_name=emergency_name,
+#                     emergency_contact_number=emergency_number,
+#                     emergency_contact_relation=emergency_relation,
+#                     role=role,
+#                     designation=designation,
+#                     base_salary=base_salary,
+#                     resume=resume,
+#                     account_number=account_number,
+#                     ifsc_code=ifsc_code,
+#                     account_holder_name=account_holder_name,
+#                     bank_name=bank_name,
+#                     bank_address=bank_address,
+#                     training_start_date=joining_date,  # यह अब 100% date object है
+#                     is_in_training=True,
+#                     training_per_day_salary=Decimal('100.00')
+#                 )
+
+#                 # Handle Multiple Documents
+#                 document_names = request.POST.getlist('document_name[]')
+#                 document_files = request.FILES.getlist('documents[]')
+
+#                 for name, file in zip(document_names, document_files):
+#                     if name and file:
+#                         EmployeeDocument.objects.create(
+#                             employee=emp,
+#                             document_name=name,
+#                             document_file=file
+#                         )
+
+#                 #   Check training status
+#                 emp.check_training_status()
+                
+#                 # अब यह line error नहीं देगी क्योंकि emp.training_start_date एक वास्तविक date object है
+#                 if emp.is_in_training:
+#                     messages.success(request, 
+#                         f"✅ Employee {emp.employee_id} added! "
+#                         f"Training: {emp.training_days_remaining} working days remaining (₹100/day). "
+#                         f"Joining Date: {emp.training_start_date.strftime('%d %b %Y')}"
+#                     )
+#                 else:
+#                     messages.success(request, 
+#                         f"✅ Employee {emp.employee_id} added! Training already completed."
+#                     )
+                
+#                 return redirect("employee_list")
+
+#         except Exception as e:
+#             messages.error(request, f"Error: {str(e)}")
+#             import traceback
+#             print(traceback.format_exc())  # Debug ke liye
+
+#     context = {
+#         'today': date.today().isoformat()
+#     }
+#     return render(request, "employee/add_employee.html", context)
+
 @check_blocked_user
 @login_required
 @role_required(['super_admin'])
 def add_employee(request):
     """
-      UPDATED: Manual joining date + auto training status check
+    ✅ UPDATED: Smart training status based on joining date + Manual checkbox override
     """
     if request.method == "POST":
         try:
@@ -1243,16 +1370,16 @@ def add_employee(request):
                 base_salary = request.POST.get('base_salary')
                 resume = request.FILES.get('resume')
                 
-                #   IMPORTANT: Form से date को string के रूप में प्राप्त करें
+                # 🔥 Get joining date
                 joining_date_str = request.POST.get('joining_date')
                 
-                # अब इसे proper date object में convert करें
                 if joining_date_str:
-                    # अगर date दी गई है, तो string को date में बदलें
                     joining_date = datetime.strptime(joining_date_str, '%Y-%m-%d').date()
                 else:
-                    # अगर date नहीं दी गई है, तो आज की date का उपयोग करें
                     joining_date = date.today()
+                
+                # 🔥 Get manual training skip checkbox
+                skip_training = request.POST.get('skip_training') == 'on'
                 
                 # Step 5 - Bank Details
                 account_number = request.POST.get('account_number')
@@ -1261,7 +1388,25 @@ def add_employee(request):
                 bank_name = request.POST.get('bank_name')
                 bank_address = request.POST.get('bank_address')
 
-                #   अब आप एक proper date object पास कर रहे हैं
+                # 🔥 SMART TRAINING DECISION
+                days_since_joining = (date.today() - joining_date).days
+                
+                # Logic:
+                # 1. If checkbox checked → Skip training (old employee)
+                # 2. If joining date >= 15 days old → Skip training (automatic)
+                # 3. Otherwise → Training active (new employee)
+                
+                if skip_training:
+                    is_in_training = False
+                    training_message = "✅ Training skipped (Manual override - Old employee)"
+                elif days_since_joining >= 15:
+                    is_in_training = False
+                    training_message = f"✅ Training completed automatically (Joined {days_since_joining} days ago)"
+                else:
+                    is_in_training = True
+                    training_message = f"🎓 Training active: 7 working days @ ₹100/day"
+
+                # Create Employee
                 emp = Employee.objects.create(
                     employee_id=employee_id,
                     full_name=full_name,
@@ -1288,8 +1433,8 @@ def add_employee(request):
                     account_holder_name=account_holder_name,
                     bank_name=bank_name,
                     bank_address=bank_address,
-                    training_start_date=joining_date,  # यह अब 100% date object है
-                    is_in_training=True,
+                    training_start_date=joining_date,
+                    is_in_training=is_in_training,  # 🔥 Dynamically set
                     training_per_day_salary=Decimal('100.00')
                 )
 
@@ -1305,32 +1450,24 @@ def add_employee(request):
                             document_file=file
                         )
 
-                #   Check training status
-                emp.check_training_status()
-                
-                # अब यह line error नहीं देगी क्योंकि emp.training_start_date एक वास्तविक date object है
-                if emp.is_in_training:
-                    messages.success(request, 
-                        f"✅ Employee {emp.employee_id} added! "
-                        f"Training: {emp.training_days_remaining} working days remaining (₹100/day). "
-                        f"Joining Date: {emp.training_start_date.strftime('%d %b %Y')}"
-                    )
-                else:
-                    messages.success(request, 
-                        f"✅ Employee {emp.employee_id} added! Training already completed."
-                    )
+                # Success message with training info
+                messages.success(request, 
+                    f"✅ Employee {emp.employee_id} - {emp.full_name} added successfully! "
+                    f"{training_message}"
+                )
                 
                 return redirect("employee_list")
 
         except Exception as e:
-            messages.error(request, f"Error: {str(e)}")
+            messages.error(request, f"❌ Error: {str(e)}")
             import traceback
-            print(traceback.format_exc())  # Debug ke liye
+            print(traceback.format_exc())  # Debug
 
     context = {
         'today': date.today().isoformat()
     }
     return render(request, "employee/add_employee.html", context)
+
 
 
 # EMPLOYEE LIST
@@ -3152,24 +3289,48 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     return R * c
 
 
+# def check_geofence(user_lat, user_lon):
+#     """Check if within 70m radius"""
+#     config = GeofenceConfig.objects.filter(is_active=True).first()
+    
+#     if not config:
+#         office_lat = Decimal('23.351633')
+#         office_lon = Decimal('85.3162779')
+#         radius = 70
+#     else:
+#         office_lat = config.latitude
+#         office_lon = config.longitude
+#         radius = config.radius_meters
+    
+#     distance = calculate_distance(user_lat, user_lon, office_lat, office_lon)
+#     is_within = distance <= radius
+    
+#     return is_within, round(distance, 2), config
+
 def check_geofence(user_lat, user_lon):
-    """Check if within 70m radius"""
+    """
+    🔥 FIXED: Proper null handling with default values
+    """
     config = GeofenceConfig.objects.filter(is_active=True).first()
     
     if not config:
-        office_lat = Decimal('23.351633')
-        office_lon = Decimal('85.3162779')
-        radius = 70
-    else:
-        office_lat = config.latitude
-        office_lon = config.longitude
-        radius = config.radius_meters
+        # 🔥 Create default config if missing
+        config = GeofenceConfig.objects.create(
+            office_name="Head Office",
+            latitude=Decimal('23.351633'),
+            longitude=Decimal('85.3162779'),
+            radius_meters=80,
+            is_active=True
+        )
+    
+    office_lat = config.latitude
+    office_lon = config.longitude
+    radius = config.radius_meters
     
     distance = calculate_distance(user_lat, user_lon, office_lat, office_lon)
     is_within = distance <= radius
     
     return is_within, round(distance, 2), config
-
 
 # ==================== LEAVE MANAGEMENT ====================
 
@@ -3745,13 +3906,43 @@ def mark_absent_for_past_dates(employee=None):
     return marked_count
 
 
+# @check_blocked_user
+# @login_required
+# @role_required(['hr', 'sales', 'developer', 'seos','digital_marketing' ,'admin'])
+# def punch_attendance(request):
+#     """
+#     Modified - Auto marks absent for logged-in employee when they open punch page
+#     """
+#     user_id = request.session.get('user_id')
+#     employee = get_object_or_404(Employee, id=user_id)
+    
+#     # Auto-mark absent for THIS employee only (faster)
+#     mark_absent_for_past_dates(employee)
+    
+#     today = timezone.now().date()
+    
+#     today_punches = AttendancePunch.objects.filter(employee=employee, punch_date=today).order_by('punch_datetime')
+#     today_breaks = BreakLog.objects.filter(employee=employee, attendance_date=today)
+    
+#     last_punch = today_punches.last()
+#     is_checked_in = last_punch and last_punch.punch_type in ['check_in', 'break_end']
+#     is_on_break = last_punch and last_punch.punch_type == 'break_start'
+    
+#     return render(request, 'Attendance/punch_attendance.html', {
+#         'employee': employee,
+#         'today_punches': today_punches,
+#         'today_breaks': today_breaks,
+#         'is_checked_in': is_checked_in,
+#         'is_on_break': is_on_break,
+#         'config': GeofenceConfig.objects.filter(is_active=True).first()
+#     })
+
+
 @check_blocked_user
 @login_required
 @role_required(['hr', 'sales', 'developer', 'seos','digital_marketing' ,'admin'])
 def punch_attendance(request):
-    """
-    Modified - Auto marks absent for logged-in employee when they open punch page
-    """
+    
     user_id = request.session.get('user_id')
     employee = get_object_or_404(Employee, id=user_id)
     
@@ -3767,146 +3958,27 @@ def punch_attendance(request):
     is_checked_in = last_punch and last_punch.punch_type in ['check_in', 'break_end']
     is_on_break = last_punch and last_punch.punch_type == 'break_start'
     
+    # FIX: Get or create default config
+    config = GeofenceConfig.objects.filter(is_active=True).first()
+    
+    if not config:
+        # Create default config if not exists
+        config = GeofenceConfig.objects.create(
+            office_name="Head Office",
+            latitude=Decimal('23.351633'),
+            longitude=Decimal('85.3162779'),
+            radius_meters=80,
+            is_active=True
+        )
+    
     return render(request, 'Attendance/punch_attendance.html', {
         'employee': employee,
         'today_punches': today_punches,
         'today_breaks': today_breaks,
         'is_checked_in': is_checked_in,
         'is_on_break': is_on_break,
-        'config': GeofenceConfig.objects.filter(is_active=True).first()
+        'config': config  # ✅ Now guaranteed to have a value
     })
-
-
-# @check_blocked_user
-# @login_required
-# @role_required(['hr', 'sales', 'developer', 'seos','digital_marketing' ,'admin'])
-# def process_punch(request):
-#     """Process punch with geofence + allow only 1 check-in & 1 check-out per day"""
-#     if request.method == "POST":
-#         try:
-#             user_id = request.session.get('user_id')
-#             employee = get_object_or_404(Employee, id=user_id)
-
-#             punch_type = request.POST.get('punch_type')
-#             user_lat = Decimal(request.POST.get('latitude'))
-#             user_lon = Decimal(request.POST.get('longitude'))
-
-#             today = timezone.now().date()
-
-#             # Fetch today's punches
-#             today_punches = AttendancePunch.objects.filter(
-#                 employee=employee,
-#                 punch_date=today
-#             ).order_by('punch_datetime')
-
-#             # Check rules: Only ONE check-in allowed
-#             if punch_type == "check_in":
-#                 if today_punches.filter(punch_type='check_in').exists():
-#                     return JsonResponse({
-#                         'success': False,
-#                         'message': '❌ You already checked-in today.'
-#                     })
-
-#             # Check rules: Only ONE check-out allowed
-#             if punch_type == "check_out":
-#                 if not today_punches.filter(punch_type='check_in').exists():
-#                     return JsonResponse({
-#                         'success': False,
-#                         'message': '❌ You must check-in first.'
-#                     })
-
-#                 if today_punches.filter(punch_type='check_out').exists():
-#                     return JsonResponse({
-#                         'success': False,
-#                         'message': '❌ You have already checked-out today.'
-#                     })
-
-#             # If already checked-out → NO MORE punch actions allowed
-#             if today_punches.filter(punch_type='check_out').exists():
-#                 return JsonResponse({
-#                     'success': False,
-#                     'message': '❌ You have already completed your day. No more punches allowed today.'
-#                 })
-
-#             # Cannot start break without check-in
-#             if punch_type == "break_start":
-#                 last_p = today_punches.last()
-#                 if not last_p or last_p.punch_type != "check_in" and last_p.punch_type != "break_end":
-#                     return JsonResponse({
-#                         'success': False,
-#                         'message': "❌ You must be checked-in to start a break."
-#                     })
-
-#             # Cannot end break without starting break
-#             if punch_type == "break_end":
-#                 last_break_start = today_punches.filter(punch_type='break_start').last()
-#                 last_break_end = today_punches.filter(punch_type='break_end').last()
-
-#                 if not last_break_start:
-#                     return JsonResponse({
-#                         'success': False,
-#                         'message': "❌ No break started."
-#                     })
-
-#                 if last_break_end and last_break_end.punch_datetime > last_break_start.punch_datetime:
-#                     return JsonResponse({
-#                         'success': False,
-#                         'message': "❌ Break already ended."
-#                     })
-
-#             # GEO-FENCE CHECK
-#             is_within, distance, config = check_geofence(user_lat, user_lon)
-
-#             if not is_within:
-#                 return JsonResponse({
-#                     'success': False,
-#                     'message': f'❌ You are {distance}m away! Must be within {config.radius_meters}m.'
-#                 })
-
-#             # SAVE Punch
-#             punch = AttendancePunch.objects.create(
-#                 employee=employee,
-#                 employee_id_display=employee.employee_id,
-#                 employee_name=employee.full_name,
-#                 punch_type=punch_type,
-#                 latitude=user_lat,
-#                 longitude=user_lon,
-#                 is_within_geofence=is_within,
-#                 distance_from_office=Decimal(str(distance))
-#             )
-
-#             # BREAK END → create break record
-#             if punch_type == 'break_end':
-#                 break_start = AttendancePunch.objects.filter(
-#                     employee=employee,
-#                     punch_date=today,
-#                     punch_type='break_start'
-#                 ).exclude(break_starts__break_end__isnull=False).last()
-
-#                 if break_start:
-#                     is_lunch = time(14, 0) <= break_start.punch_time <= time(15, 0)
-#                     BreakLog.objects.create(
-#                         employee=employee,
-#                         attendance_date=today,
-#                         break_start=break_start,
-#                         break_end=punch,
-#                         is_lunch_break=is_lunch
-#                     )
-
-#             # CHECK-OUT → auto calculate attendance
-#             if punch_type == 'check_out':
-#                 calculate_attendance(employee, punch.punch_date)
-
-#             return JsonResponse({
-#                 'success': True,
-#                 'message': f'✅ {punch.get_punch_type_display()} successful!',
-#                 'punch_time': punch.punch_time.strftime('%H:%M:%S')
-#             })
-
-#         except Exception as e:
-#             return JsonResponse({'success': False, 'message': str(e)})
-
-#     return JsonResponse({'success': False})
 
 
 @check_blocked_user
