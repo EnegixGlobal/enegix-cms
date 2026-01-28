@@ -61,6 +61,9 @@ urlpatterns = [
 
     # ---------------------------- Project Assigned -------------------------
 
+    # new urls.py
+     path('projects/add-directly/', add_project_directly, name='add_project_directly'),
+
     path('projects/', project_list, name='project_list'),
     path('projects/create/<int:client_id>/', create_project, name='create_project'),
     path('projects/edit/<int:id>/', edit_project, name='edit_project'),

@@ -2364,6 +2364,155 @@ def delete_client(request, id):
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Projects Assigned =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#  New views.py for creating projects and client manually in case for old projects aur to create new projects for existing clients
+
+@check_blocked_user
+@login_required
+@role_required(['admin', 'super_admin'])
+def add_project_directly(request):
+    """
+     NEW: Add projects for EXISTING or NEW clients
+    For importing old/historical data
+    """
+    if request.method == "POST":
+        try:
+            with transaction.atomic():
+                client_option = request.POST.get('client_option')  # 'existing' or 'new'
+                
+                user_id = request.session.get('user_id')
+                user_role = request.session.get('role')
+                user_name = request.session.get('full_name')
+                
+                # ========== STEP 1: Get or Create Client ==========
+                if client_option == 'existing':
+                    # Use existing client
+                    client_id = request.POST.get('existing_client_id')
+                    
+                    if not client_id:
+                        messages.error(request, "❌ Please select an existing client!")
+                        return redirect('add_project_directly')
+                    
+                    client = get_object_or_404(Client, id=client_id)
+                    
+                    # Update status to interested if not already
+                    if client.status != 'interested':
+                        client.status = 'interested'
+                        client.save()
+                    
+                    messages.info(request, 
+                        f"ℹ️ Using existing client: {client.company_name} ({client.client_id})"
+                    )
+                
+                else:  # client_option == 'new'
+                    # Create new client
+                    company_name = request.POST.get('company_name')
+                    contact_person = request.POST.get('contact_person')
+                    email = request.POST.get('email')
+                    mobile = request.POST.get('mobile')
+                    address = request.POST.get('address')
+                    
+                    # Validation
+                    if not all([company_name, contact_person, mobile]):
+                        messages.error(request, "❌ Please fill all required client fields!")
+                        return redirect('add_project_directly')
+                    
+                    # Check duplicate by email OR company name
+                    if email:
+                        existing = Client.objects.filter(
+                            Q(email=email) | Q(company_name=company_name)
+                        ).first()
+                    else:
+                        existing = Client.objects.filter(company_name=company_name).first()
+                    
+                    if existing:
+                        messages.warning(request, 
+                            f"⚠️ Client with similar details already exists! "
+                            f"Using: {existing.company_name} ({existing.client_id})"
+                        )
+                        client = existing
+                        
+                        if client.status != 'interested':
+                            client.status = 'interested'
+                            client.save()
+                    else:
+                        # Create new client
+                        client = Client.objects.create(
+                            company_name=company_name,
+                            contact_person=contact_person,
+                            email=email or '',
+                            mobile=mobile,
+                            address=address or '',
+                            added_by_name=user_name,
+                            added_by_role=user_role,
+                            status='interested',
+                            total_calls=0,
+                            last_call_date=None
+                        )
+                        
+                        messages.success(request, 
+                            f"✅ New client created: {client.company_name} ({client.client_id})"
+                        )
+                
+                # ========== STEP 2: Create Project ==========
+                project_name = request.POST.get('project_name')
+                project_type = request.POST.get('project_type')
+                description = request.POST.get('description')
+                start_date = request.POST.get('start_date')
+                deadline = request.POST.get('deadline')
+                
+                # Financial details
+                total_amount = request.POST.get('total_amount')
+                if not total_amount or Decimal(total_amount) <= 0:
+                    messages.error(request, "❌ Please enter valid project amount!")
+                    return redirect('add_project_directly')
+                
+                budget = request.POST.get('budget') or None
+                
+                # Files
+                agreement = request.FILES.get('agreement')
+                module_file = request.FILES.get('module_file')
+                
+                # Create project
+                project = Project.objects.create(
+                    project_name=project_name,
+                    project_type=project_type,
+                    client=client,
+                    description=description,
+                    start_date=start_date,
+                    deadline=deadline,
+                    budget=budget,
+                    total_amount=Decimal(total_amount),
+                    amount_received=Decimal('0'),
+                    amount_pending=Decimal(total_amount),
+                    payment_status='unpaid',
+                    status='pending',  # Default status
+                    agreement=agreement,
+                    module_file=module_file,
+                    created_by_name=user_name,
+                    created_by_role=user_role
+                )
+                
+                messages.success(request, 
+                    f"✅ Project {project.project_id} created successfully for {client.company_name}!"
+                )
+                
+                return redirect('project_list')
+                
+        except Exception as e:
+            messages.error(request, f"❌ Error: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+    
+    # GET request - Load form with existing clients
+    existing_clients = Client.objects.filter(is_active=True).order_by('-created_at')
+    
+    context = {
+        'today': date.today().isoformat(),
+        'existing_clients': existing_clients
+    }
+    return render(request, 'projects/add_project_directly.html', context)
+
+
 # CREATE PROJECT (From Interested Client)
 @check_blocked_user
 @login_required
@@ -3977,7 +4126,7 @@ def punch_attendance(request):
         'today_breaks': today_breaks,
         'is_checked_in': is_checked_in,
         'is_on_break': is_on_break,
-        'config': config  # ✅ Now guaranteed to have a value
+        'config': config  # Now guaranteed to have a value
     })
 
 

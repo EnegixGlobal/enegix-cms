@@ -50,8 +50,8 @@
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label"><i class="fas fa-envelope me-2 text-primary"></i>Email <span class="text-danger">*</span></label>
-              <input type="email" name="email" class="form-control modern-input" placeholder="Enter email address" required />
+              <label class="form-label"><i class="fas fa-envelope me-2 text-primary"></i>Email</label>
+              <input type="email" name="email" class="form-control modern-input" placeholder="Enter email address (optional)" />
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label"><i class="fas fa-mobile-alt me-2 text-primary"></i>Mobile Number <span class="text-danger">*</span></label>
@@ -186,10 +186,9 @@ document.getElementById('prevBtn').addEventListener('click', () => {
 function validateStep1() {
   const companyName = document.querySelector('input[name="company_name"]').value.trim();
   const contactPerson = document.querySelector('input[name="contact_person"]').value.trim();
-  const email = document.querySelector('input[name="email"]').value.trim();
   const mobile = document.querySelector('input[name="mobile"]').value.trim();
   
-  if (!companyName || !contactPerson || !email || !mobile) {
+  if (!companyName || !contactPerson || !mobile) {
     alert('Please fill all required fields!');
     return false;
   }

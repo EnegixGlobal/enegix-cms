@@ -532,7 +532,7 @@ class Client(models.Model):
     client_id = models.CharField(max_length=10, unique=True, editable=False)
     company_name = models.CharField(max_length=200)
     contact_person = models.CharField(max_length=100)
-    email = models.EmailField()
+    email = models.EmailField(blank=True, null=True)  # ✅ NOW OPTIONAL
     mobile = models.CharField(max_length=15)
     address = models.TextField(blank=True, null=True)
     
@@ -565,7 +565,8 @@ class Client(models.Model):
     
     def __str__(self):
         return f"{self.client_id} - {self.company_name}"
-
+    
+    
 
 class ClientCallLog(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='call_logs')

@@ -212,6 +212,12 @@
         <div class="accordion-body px-3 py-2">
           <a
             class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'add_project_directly' %}"
+          >
+            <i class="fas fa-plus-square me-3 fs-2"></i> Add Project
+          </a>
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
             href="{% url 'project_list' %}"
           >
             <i class="fas fa-list me-2"></i> Project List
@@ -500,6 +506,13 @@
       </h2>
       <div id="collapseProjectsAD" class="accordion-collapse collapse">
         <div class="accordion-body px-3 py-2">
+          <a
+            class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
+            href="{% url 'add_project_directly' %}"
+          >
+            <i class="fas fa-plus-square me-3 fs-2"></i> Add Project
+          </a>
+          
           <a
             class="d-block text-white text-decoration-none py-2 px-3 mb-1 rounded sidebar-link"
             href="{% url 'project_list' %}"
